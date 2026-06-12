@@ -1,0 +1,762 @@
+/* Divs */
+
+.maincontainer{ /* Main Container Style */
+  width: 920px;
+  height: 680px;
+
+  background-color: rgb(218, 218, 218);
+
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+
+  border: 2px solid rgb(187, 187, 187);
+  border-radius: 15px;
+}
+
+.listofPIDwindow{
+  width: 100%;
+  height: 100%;
+
+  background-color: rgb(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.notifydiv{
+  display: none;
+  width: 100%;
+  height: 100%;
+
+  background-color: rgb(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.notifycentraldiv{
+  width: 300px;
+  height: 320px;
+
+  background-color: rgb(255, 255, 255);
+  border: 2px solid rgb(187, 187, 187);
+  border-radius: 15px;
+
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.centraldiv{
+  width: 300px;
+  height: 450px;
+
+  background-color: rgb(255, 255, 255);
+  border: 2px solid rgb(187, 187, 187);
+  border-radius: 15px;
+
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.linediv{
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+
+.linediv.centerline{
+  width: 100%;
+  height: 3px;
+  background-color: rgb(187, 187, 187);
+  top: 50%;
+  left: 50%;
+}
+
+
+.linediv.middleline{
+
+  width: 4px;
+  height: 250px;
+  background-color: rgb(187, 187, 187);
+  border-radius: 5px;
+
+  top: 30%;
+  left: 30%;
+}
+
+.linediv.middleline2{
+
+  width: 4px;
+  height: 250px;
+  background-color: rgb(187, 187, 187);
+  border-radius: 5px;
+
+  top: 30%;
+  left: 70%;
+}
+
+/* Texts */
+
+.title { /* Title Class */
+  position: absolute;
+  top: 1%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.title.pidlistitle { /* Title "PID List" Style */
+  font-family: "Audiowide", sans-serif;
+  font-size: 30px;
+}
+
+.title.notifytitle { /* Title "Notification" Style */
+  font-family: "Audiowide", sans-serif;
+  font-size: 25px;
+}
+
+.title.title-trigox { /* Title "Trigox" Style */
+  font-family: "Audiowide", sans-serif;
+  font-size: 35px;
+}
+
+
+.subtitle { /* Subtitle Class */
+  position: absolute;
+}
+
+
+.subtitle.triggerchoice {
+  top: 21%;
+  left: 40px;
+  font-family: "Anta", sans-serif;
+  font-size: 20px;
+  text-align: left;
+}
+
+.subtitle.nameinputtitle {
+  top: 9%;
+  left: 40px;
+  font-family: "Anta", sans-serif;
+  font-size: 20px;
+  text-align: left;
+}
+
+.subtitle.timeinputtitle{
+  top: 33%;
+  left: 40px;
+  font-family: "Anta", sans-serif;
+  font-size: 20px;
+}
+
+.subtitle.targetfoldertitle{
+  top: 11.9%;
+  left: 325px;
+  font-family: "Anta", sans-serif;
+  font-size: 20px;
+}
+  
+.subtitle.targetPIDtitle{
+  top: 11.9%;
+  left: 325px;
+  font-family: "Anta", sans-serif;
+  font-size: 20px;
+}
+
+.subtitle.advanced-settings{
+  position: absolute;
+  top: 11.9%;
+  left: 73%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-family: "Anta", sans-serif;
+  font-size: 20px;
+}
+
+/* Other elements */
+.triggerlist{
+  width: 190px;
+  height: 35px;
+
+  background-color: rgb(240, 240, 240);
+  position: absolute;
+  top: 28%;
+  left: 40px;
+
+}
+
+.triggerlist:hover{
+  background-color: rgb(220, 220, 220);
+  cursor: pointer;
+}
+
+.pid-list {
+  width: 100%;
+  height: 90%;
+  position: absolute;
+  border-radius: 15px;
+  top: 10%; 
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+}
+
+.pid-list-value {
+  height: 60px;
+  font-family: "Anta", sans-serif;
+  font-size: 25px; /* Artık yazılar kesinlikle büyüyecektir */
+  text-align: center;
+  background-color: rgb(240, 240, 240);
+  width: 100%;
+  padding: 20px 0; /* Elemanların yüksekliğini ayarlamak için padding kullanıyoruz */
+  border-bottom: 2px solid white; /* Elemanlar arasına çizgi çeker */
+  cursor: pointer;
+  box-sizing: border-box; /* Padding'in genişliği bozmasını engeller */
+}
+
+.pid-list-value:hover {
+  background-color: rgb(220, 220, 220);
+}
+
+.closepidlist {
+  position: absolute; 
+  top: 19%; 
+  left: 50%; 
+  transform: translate(-50%, -50%);
+}
+
+.closepidlist:hover {
+  background-color: rgb(220, 220, 220);
+  cursor: pointer;
+}
+
+.backnotify {
+  position: absolute; 
+  top: 19%; 
+  left: 50%; 
+  transform: translate(-50%, -50%);
+}
+
+.backnotify:hover {
+  background-color: rgb(220, 220, 220);
+  cursor: pointer;
+}
+
+.timeunitlist{
+  width: 100px;
+  height: 35px;
+
+  background-color: rgb(240, 240, 240);
+  border: 1px solid black;
+  text-align: center;
+  border-radius: 5px;
+  font-size: 15px;
+
+  position: absolute;
+  top: 40%;
+  left: 40px;
+
+}
+
+.timeunitlist:hover{
+  background-color: rgb(220, 220, 220);
+  cursor: pointer;
+}
+
+.nameinput {
+  width: 187px;
+  height: 30px;
+
+
+  background-color: rgb(240, 240, 240);
+  border: 1px solid black;
+  text-align: center;
+  border-radius: 5px;
+
+  position: absolute;
+  top: 16%;
+  left: 40px;
+}
+
+.nameinput:hover{
+  background-color: rgb(220, 220, 220);
+  cursor: pointer;
+}
+
+.timeinput{
+  width: 50px;
+  height: 30px;
+
+  background-color: rgb(240, 240, 240);
+  border: 1px solid black;
+  text-align: center;
+  border-radius: 5px;
+  font-size: 15px;
+
+  position: absolute;
+  top: 40%;
+  left: 150px;
+}
+
+.timeinput:hover{
+  background-color: rgb(220, 220, 220);
+  cursor: pointer;
+}
+
+.targetfolder{
+  width: 187px;
+  height: 30px;
+
+  border: 1px solid black;
+  border-radius: 5px;
+
+  background-color: rgb(240, 240, 240);
+  
+  position: absolute;
+  top: 16%;
+  left: 325px;
+
+}
+
+.targetfolder:hover{
+  background-color: rgb(220, 220, 220);
+  cursor: pointer;
+}
+
+.targetPID{
+
+  width: 70px;
+  height: 30px;
+
+  border: 1px solid black;
+  border-radius: 5px;
+
+  background-color: rgb(240, 240, 240);
+  
+  position: absolute;
+  top: 16%;
+  left: 325px;
+
+}
+
+.checkPID{
+  width: 30px;
+  height: 34px;
+  border: 1px solid black;
+  border-radius: 5px;
+  background-color: rgb(39, 214, 12);
+  position: absolute;
+  top: 16%;
+  left: 401px;
+
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+}
+
+.checkPID:hover{
+  background-color: rgb(43, 192, 20);
+  cursor: pointer;
+}
+
+.listPID{
+  text-align: center;
+  width: 30px;
+  height: 34px;
+  border: 1px solid black;
+  border-radius: 5px;
+  background-color: rgb(8, 100, 221);
+  position: absolute;
+  top: 16%;
+  left: 435px;
+
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+}
+
+.listPID:hover{
+  background-color: rgb(18, 89, 182);
+  cursor: pointer;
+}
+
+.infoPID{
+  width: 30px;
+  height: 34px;
+  position: absolute;
+  top: 16%;
+  left: 470px;
+  font-family: "Anta", sans-serif;
+  font-size: 15px;
+
+  border: 1px solid black;
+  border-radius: 5px;
+  background-color: rgb(240, 240, 240);
+
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;  
+}
+
+.infoPID:hover{
+  background-color: rgb(220, 220, 220);
+  cursor: pointer;
+}
+
+/* Checkbox Alanı */
+.checkbox-group {
+  position: absolute;
+  top: 25%;    /* PID inputunun (16%) aşağısına konumlandırıyoruz */
+  left: 325px; /* PID inputu ve başlığı ile aynı yatay hizada (325px) */
+  display: flex;
+  flex-direction: column; /* Alt alta dizmek için (yan yana isterseniz 'row' yapabilirsiniz) */
+  gap: 15px; /* Checkboxlar arası mesafe */
+}
+
+/* Kapsayıcı label stili */
+.custom-checkbox {
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding-left: 35px;
+  cursor: pointer;
+  font-family: "Anta", sans-serif;
+  font-size: 18px;
+  user-select: none;
+}
+
+/* Orijinal checkbox'ı gizleyelim (üzerine şık bir kutu çizeceğiz) */
+.custom-checkbox input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+/* Sahte (Custom) Kutu */
+.checkmark {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  height: 25px;
+  width: 25px;
+  background-color: rgb(240, 240, 240);
+  border: 2px solid rgb(187, 187, 187);
+  border-radius: 5px;
+  transition: all 0.2s ease;
+}
+
+/* Hover efekti */
+.custom-checkbox:hover input ~ .checkmark {
+  background-color: rgb(220, 220, 220);
+  border-color: rgb(150, 150, 150);
+}
+
+/* Seçiliyken (Checked) Arka plan rengi */
+.custom-checkbox input:checked ~ .checkmark {
+  background-color: rgb(39, 214, 12); /* Sizin projenizdeki yeşil tonu */
+  border-color: rgb(39, 214, 12);
+}
+
+/* Check ikonu ('tik' işareti) - Başlangıçta gizli */
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+/* Checkbox seçildiğinde tiki göster */
+.custom-checkbox input:checked ~ .checkmark:after {
+  display: block;
+}
+
+/* Tik işaretini çizme işlemi (Beyaz, döndürülmüş bir çizgi) */
+.custom-checkbox .checkmark:after {
+  left: 8px;
+  top: 3px;
+  width: 6px;
+  height: 12px;
+  border: solid white;
+  border-width: 0 3px 3px 0;
+  transform: rotate(45deg);
+}
+
+/* Notification Settings Menu Elements */
+
+.notifytitleinputlabel {
+  position: absolute;
+  top: 15%;
+  left: 20px;
+  font-family: "Anta", sans-serif;
+  font-size: 18px;
+}
+
+.notifytitleinput {
+  position: absolute;
+  top: 25%;
+  left: 20px;
+  width: 250px;
+  height: 30px;
+  background-color: rgb(240, 240, 240);
+  border: 1px solid black;
+  border-radius: 5px;
+  box-sizing: border-box;
+  padding-left: 10px;
+}
+
+.notifytitleinput:hover, .notifymessageinput:hover {
+  background-color: rgb(220, 220, 220);
+}
+
+.notifymessageinputlabel {
+  position: absolute;
+  top: 45%;
+  left: 20px;
+  font-family: "Anta", sans-serif;
+  font-size: 18px;
+}
+
+.notifymessageinput {
+  position: absolute;
+  top: 55%;
+  left: 20px;
+  width: 250px;
+  height: 30px;
+  background-color: rgb(240, 240, 240);
+  border: 1px solid black;
+  border-radius: 5px;
+  box-sizing: border-box;
+  padding-left: 10px;
+}
+
+.savenotify {
+  position: absolute;
+  top: 75%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 40px;
+  background-color: rgb(240, 240, 240);
+  border: 1px solid black;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.savenotify:hover {
+  background-color: rgb(220, 220, 220);
+}
+
+
+.advanced-title {
+  font-family: "Anta", sans-serif;
+  font-size: 18px;
+  position: static; 
+  margin: 0;
+}
+
+.adv-input {
+  width: 180px;
+  height: 30px;
+  background-color: rgb(240, 240, 240);
+  border: 1px solid black;
+  border-radius: 5px;
+  padding-left: 10px;
+  box-sizing: border-box;
+}
+
+.adv-input:hover {
+  background-color: rgb(220, 220, 220);
+}
+
+.adv-label {
+  font-size: 16px;
+  margin-bottom: -5px;
+}
+
+.create-btn {
+  position: absolute;
+  top: 41%;
+  left: 73.5%;
+  width: 170px;
+  height: 45px;
+  background-color: rgb(39, 214, 12);
+  border: 1px solid black;
+  border-radius: 5px;
+  font-family: "Audiowide", sans-serif;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.create-btn:hover {
+  background-color: rgb(43, 192, 20);
+}
+
+/* Webhook Settings Menu Elements */
+.webhookdiv {
+  display: none;
+  width: 100%;
+  height: 100%;
+  background-color: rgb(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.webhookcentraldiv {
+  width: 300px;
+  height: 250px;
+  background-color: rgb(255, 255, 255);
+  border: 2px solid rgb(187, 187, 187);
+  border-radius: 15px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.webhookinputlabel {
+  position: absolute;
+  top: 30%;
+  left: 20px;
+  font-family: "Anta", sans-serif;
+  font-size: 18px;
+}
+
+.webhookinput {
+  position: absolute;
+  top: 45%;
+  left: 20px;
+  width: 250px;
+  height: 30px;
+  background-color: rgb(240, 240, 240);
+  border: 1px solid black;
+  border-radius: 5px;
+  box-sizing: border-box;
+  padding-left: 10px;
+}
+
+.webhookinput:hover {
+  background-color: rgb(220, 220, 220);
+}
+
+.savewebhook {
+  position: absolute;
+  top: 75%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 40px;
+  background-color: rgb(240, 240, 240);
+  border: 1px solid black;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.savewebhook:hover {
+  background-color: rgb(220, 220, 220);
+}
+
+.closewebhookbtn {
+  position: absolute; 
+  top: 19%; 
+  left: 50%; 
+  transform: translate(-50%, -50%);
+}
+
+.closewebhookbtn:hover {
+  background-color: rgb(220, 220, 220);
+  cursor: pointer;
+}
+
+/* Documentation Window Styles */
+.docs-btn {
+  position: absolute;
+  top: 41%;
+  left: 93%;
+  width: 45px;
+  height: 45px;
+  background-color: rgb(240, 240, 240);
+  border: 1px solid black;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.docs-btn:hover {
+  background-color: rgb(220, 220, 220);
+}
+
+.docswindow {
+  display: none;
+  width: 100%;
+  height: 100%;
+  background-color: rgb(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.docscentraldiv {
+  width: 550px;
+  height: 550px;
+  background-color: rgb(255, 255, 255);
+  border: 2px solid rgb(187, 187, 187);
+  border-radius: 15px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 20px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.docscontent {
+  margin-top: 55px;
+  font-family: "Anta", sans-serif;
+  font-size: 16px;
+  text-align: left;
+}
+
+.closedocs {
+  position: absolute; 
+  top: 3%; 
+  left: 50%; 
+  transform: translate(-50%, -50%);
+}
+
+.closedocs:hover {
+  background-color: rgb(220, 220, 220);
+  cursor: pointer;
+}

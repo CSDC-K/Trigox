@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trigox</title>
+  <!-- Links for styles -->
+  <link rel="stylesheet" href="src/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anta&family=Audiowide&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Main container of "Trigox" it considers all elements in the program. -->
+  <div class="maincontainer">
+    <h1 class="title title-trigox">
+      Trigox
+    </h1>
+
+    <label>
+      <p class="subtitle nameinputtitle">
+        Name your trigger
+      </p>
+    </label>
+    <input type="text" placeholder="Select a name for trigger" class="nameinput" id="nameinput">
+
+
+    <label>
+      <p class="subtitle timeinputtitle">
+        Execute after
+      </p>
+    </label>
+    <input type="number" placeholder="Num" class="timeinput" id="timeinput">
+    <select class="timeunitlist" id="timeunitlist">
+      <option value="Seconds">Seconds</option>
+      <option value="Minutes">Minutes</option>
+      <option value="Hours">Hours</option>
+      <option value="Days">Days</option>
+      <option value="Weeks">Weeks</option>
+    </select>
+
+    <div class="linediv middleline"></div>
+
+    <p class="subtitle triggerchoice">
+      Choose your trigger
+    </p>
+
+    <select class="triggerlist" id="triggerlist">
+      <option value="None">Select a trigger</option>
+    </select>
+
+
+    <div class="linediv centerline"></div> 
+
+    <div style="display: none;" id="FileTriggerDiv">
+      <label class="subtitle targetfoldertitle">
+        Select target folder
+      </label>
+      <input type="button" class="targetfolder" id="targetfolder" value="Select a target folder" onclick="FolderDialog()">
+    </div>
+
+
+    <div style="display: none;" id="AppTriggerDiv">
+      <label class="subtitle targetPIDtitle" id="pidtitle">
+        Enter target PID (Not Confirmed)
+      </label>
+      <input type="text" placeholder="Write a PID" class="targetPID" id="targetPID">
+      <button type="button" class="checkPID" id="checkPID" onclick="checkPID()">
+        <img src="src/assets/check.png" width="20px" height="20px">
+      </button>
+      <button type="button" class="listPID"  id="listPID"  onclick="listPID()">
+        <img src="src/assets/list.png" width="20px" height="20px" alt="icon">
+      </button>
+      <button type="button" class="infoPID"  id="infoPID"  onclick="infoPID()">
+        <img src="src/assets/info.png" width="20px" height="20px" alt="icon">
+      </button>
+
+      <div class="checkbox-group">
+        <label class="custom-checkbox">
+          <input type="checkbox" id="runShellCheck">
+          <span class="checkmark"></span>
+          Run Shell Script
+        </label>
+        <label class="custom-checkbox">
+          <input type="checkbox" id="showNotifCheck">
+          <span class="checkmark"></span>
+          Show Notification
+        </label>
+        <label class="custom-checkbox">
+          <input type="checkbox" id="soundPlayCheck">
+          <span class="checkmark"></span>
+          Play Sound
+        </label>
+        <label class="custom-checkbox">
+          <input type="checkbox" id="autoRestartCheck">
+          <span class="checkmark"></span>
+          Webhook
+        </label>
+      </div>
+
+      <div class="linediv middleline2"></div>
+      
+      <div class="subtitle advanced-settings" id="advancedSettings">
+        <p class="subtitle advanced-title">Advanced Settings</p>
+        <label class="adv-label">Scan per second</label>
+        <input type="text" placeholder="e.g. 1.0" class="adv-input" id="advInput1">
+        <label class="adv-label">Spam limit</label>
+        <input type="text" placeholder="e.g. 5" class="adv-input" id="advInput2">
+      </div>
+
+    </div>
+    <button class="docs-btn" id="docsBtn" style="display: none;" onclick="openDocs()">
+      <img src="src/assets/info.png" width="25px" height="25px" alt="docs">
+    </button>
+    <button class="create-btn" id="createTriggerBtn" style="display: none;" onclick="Create()">Create Trigger</button>
+  </div>
+
+
+
+
+  <div class="listofPIDwindow" style="display: none;" id="listofPID">
+    <div class="centraldiv">
+      <h1 class="title pidlistitle">PID List</h1>
+      <ul class="pid-list" id="pid-list">
+
+      </ul>
+    </div>
+    <button class="closepidlist" id="closepidlist" onclick="closePIDList()">
+      <img src="src/assets/close.png" width="20px" height="20px" alt="icon" >
+    </button>
+  </div>
+
+  <div class="notifydiv" id="notifydiv">
+    <div class="notifycentraldiv">
+      <h1 class="title notifytitle">Configure</h1>
+      <label class="notifytitleinputlabel">Enter Title</label>
+      <input type="text" placeholder="Title of notification" class="notifytitleinput" id="notifytitleinput">
+      <label class="notifymessageinputlabel">Enter Message</label>
+      <input type="text" placeholder="Message of notification" class="notifymessageinput" id="notifymessageinput">
+      <button class="savenotify" id="savenotify" onclick="saveNotifySettings()">
+        <img src="src/assets/save.png" width="20px" height="20px" alt="icon">
+      </button>
+    </div>
+    
+    <button class="backnotify" id="backnotify" onclick="backNotify()">
+      <img src="src/assets/close.png" width="20px" height="20px" alt="icon">
+    </button>
+  </div>
+
+  <!-- Webhook Configuration Menu -->
+  <div class="webhookdiv" id="webhookdiv">
+    <div class="webhookcentraldiv">
+      <h1 class="title notifytitle">Webhook</h1>
+      <label class="webhookinputlabel">Enter Webhook URL</label>
+      <input type="text" placeholder="https://..." class="webhookinput" id="webhookinput">
+      <button class="savewebhook" id="savewebhook" onclick="saveWebhookSettings()">
+        <img src="src/assets/save.png" width="20px" height="20px" alt="icon">
+      </button>
+    </div>
+    
+    <button class="closewebhookbtn" id="closewebhookbtn" onclick="closeWebhook()">
+      <img src="src/assets/close.png" width="20px" height="20px" alt="icon">
+    </button>
+  </div>
+
+  <!-- Documentation Menu -->
+  <div class="docswindow" id="docswindow">
+    <div class="docscentraldiv">
+      <h1 class="title notifytitle" style="top: 8%;">Documentation</h1>
+      <div class="docscontent">
+        <p>This is the documentation area...</p>
+        <p>You can add your detailed help guides and settings explanations here.</p>
+        <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+        <p>End of documentation. (Scroll test)</p>
+      </div>
+    </div>
+    
+    <button class="closedocs" id="closedocs" onclick="closeDocs()">
+      <img src="src/assets/close.png" width="20px" height="20px" alt="icon">
+    </button>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

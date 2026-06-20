@@ -5,13 +5,27 @@ import { resolveResource } from "@tauri-apps/api/path";
 import { open, message } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 
+// Values for using in Rust commands
 
 interface PidList {
   PID: number;
   NAME: string;
 }
 
-// HTML values
+interface OtherValues {
+  Pid?: number;
+  FilePath?: string;
+}
+
+type Actions = 
+ | { Action: "Notify", ActionData: { Title: string, Message: string } }
+ | { Action: "ShellScript", ActionData: { ScriptPath: string } }
+ | { Action: "PlaySound", ActionData: { SoundPath: string } }
+ | { Action: "Webhook", ActionData: { HookUrl: string } }
+
+
+
+ // HTML values
 
 const TriggerList = document.getElementById("triggerlist") as HTMLSelectElement;
 
@@ -81,9 +95,13 @@ async function Create() {
   }
 
   else {
-    if (TriggerType === "File") {
+
+    var FileTriggers = await invoke<string[]>("get_file_triggers");
+    var AppTriggers = await invoke<string[]>("get_app_triggers");
+
+    if (FileTriggers.includes(TriggerType)) {
       return;
-    } else if (TriggerType === "App") {
+    } if (AppTriggers.includes(TriggerType)) {
       
         // Validation of inputs and settings
 
@@ -94,11 +112,11 @@ async function Create() {
 
         if (CheckBoxNotify.checked) {
           notify = true;
-        } else if (CheckBoxShellScript.checked) {
+        } if (CheckBoxShellScript.checked) {
           shell = true;
-        } else if (CheckBoxSound.checked) {
+        } if (CheckBoxSound.checked) {
           sound = true;
-        } else if (CheckBoxWebhook.checked) {
+        } if (CheckBoxWebhook.checked) {
           webhook = true;
         }
 
@@ -169,11 +187,49 @@ async function Create() {
 
         // If all validations are passed, create the trigger
 
-        try {
+        const selectedActions: Actions[] = [];
 
+        if (notify) {
+          selectedActions.push({
+            Action: "Notify",
+            ActionData: { Title: NotifyTitle, Message: NotifyMessage }
+          });
+        }
+        
+        if (shell) {
+          selectedActions.push({
+            Action: "ShellScript",
+            ActionData: { ScriptPath: ShellScriptPath }
+          });
+        }
+        
+        if (sound) {
+          selectedActions.push({
+            Action: "PlaySound",
+            ActionData: { SoundPath: SoundPath }
+          });
+        }
+        
+        if (webhook) {
+          selectedActions.push({
+            Action: "Webhook",
+            ActionData: { HookUrl: WebhookUrl }
+          });
+        }  
+
+
+        try {
+          await invoke("create_trigger", {
+            name: TriggerName,
+            triggerType: TriggerType,
+            actions: selectedActions,
+            otherValues: {
+              Pid: parseInt(TargetPIDValue),
+            }
+          });
         } catch(e) {
           console.error(e);
-          digitalAlart("Error", "An error occurred while creating the trigger. Please try again.", "Error");
+          digitalAlart("Error", `${e}`, "Error");
           return;
         }
 
@@ -326,11 +382,9 @@ async function backNotify() {
   }
 }
 
-var WebhookUrlValue = "";
-
 async function saveWebhookSettings() {
-  WebhookUrlValue = WebhookInput.value;
-  if (WebhookUrlValue.trim() === "") {
+  WebhookUrl= WebhookInput.value;
+  if (WebhookUrl.trim() === "") {
     digitalAlart("Error", "Webhook URL cannot be empty.", "Error");
     return;
   }
@@ -388,7 +442,7 @@ TriggerList.addEventListener("change", async () => {
   var AppTriggers = await invoke<string[]>("get_app_triggers");
 
   if (FileTriggers.includes(TriggerList.value)) {
-    TriggerType = "File";
+    TriggerType = TriggerList.value;
     FileTriggerDiv.style.display = "block";
     AppTriggerDiv.style.display = "none";
     CreateTriggerBtn.style.display = "block";
@@ -396,7 +450,7 @@ TriggerList.addEventListener("change", async () => {
   }
 
   else if (AppTriggers.includes(TriggerList.value)) {
-    TriggerType = "App";
+    TriggerType = TriggerList.value;
     FileTriggerDiv.style.display = "none";
     AppTriggerDiv.style.display = "block";
     CreateTriggerBtn.style.display = "block";

@@ -12,9 +12,18 @@ interface PidList {
   NAME: string;
 }
 
+interface TriggerOverview {
+  name: string;
+  state: boolean;
+}
+
 interface OtherValues {
   Pid?: number;
   FilePath?: string;
+  ProcessName?: string;
+  CheckingInterval: number;
+  SpamLimit: number;
+  TriggerLimit?: number;
 }
 
 type Actions = 
@@ -50,6 +59,9 @@ const WebhookInput = document.getElementById("webhookinput") as HTMLInputElement
 
 const CreateTriggerBtn = document.getElementById("createTriggerBtn") as HTMLButtonElement;
 const DocsBtn = document.getElementById("docsBtn") as HTMLButtonElement;
+const ActiveTriggersList = document.getElementById("activeTriggersList") as HTMLDivElement;
+const TriggerInfoWindow = document.querySelector(".triggerinfowindow") as HTMLDivElement;
+const TriggerInfoContent = document.getElementById("triggerinfocontent") as HTMLPreElement;
 
 const PidTitle = document.getElementById("pidtitle") as HTMLHeadingElement;
 
@@ -219,12 +231,15 @@ async function Create() {
 
 
         try {
-          await invoke("create_trigger", {
+          await invoke("create_trigger_handled", {
             name: TriggerName,
             triggerType: TriggerType,
             actions: selectedActions,
             otherValues: {
               Pid: parseInt(TargetPIDValue),
+              ProcessName: await TargetPIDName,
+              CheckingInterval: ScanPerSecond,
+              SpamLimit: SpamLimit
             }
           });
         } catch(e) {
@@ -234,6 +249,7 @@ async function Create() {
         }
 
         digitalAlart("Success", `Trigger "${TriggerName}" created successfully!`, "Success");
+        await refreshActiveTriggers();
         return;
 
     
@@ -418,6 +434,140 @@ async function closeDocs() {
   }
 }
 
+async function refreshActiveTriggers() {
+  if (!ActiveTriggersList) {
+    return;
+  }
+
+  try {
+    const activeTriggers = await invoke<TriggerOverview[]>("get_active_triggers");
+    ActiveTriggersList.innerHTML = "";
+
+    if (activeTriggers.length === 0) {
+      const emptyState = document.createElement("p");
+      emptyState.className = "active-triggers-empty";
+      emptyState.textContent = "No active triggers running.";
+      ActiveTriggersList.appendChild(emptyState);
+      return;
+    }
+
+    for (const triggerName of activeTriggers) {
+      const item = document.createElement("div");
+      item.className = "active-trigger-item";
+      if (!triggerName.state) {
+        item.classList.add("active-trigger-item--stopped");
+      }
+
+      const meta = document.createElement("div");
+      meta.className = "active-trigger-meta";
+
+      const name = document.createElement("p");
+      name.className = "active-trigger-name";
+      name.textContent = triggerName.name;
+
+      const status = document.createElement("p");
+      status.className = "active-trigger-status";
+      status.textContent = triggerName.state ? "Running" : "Stopped";
+
+      meta.appendChild(name);
+      meta.appendChild(status);
+
+      const actions = document.createElement("div");
+      actions.className = "trigger-action-group";
+
+      const infoButton = document.createElement("button");
+      infoButton.type = "button";
+      infoButton.className = "trigger-action-btn trigger-action-btn--info";
+      infoButton.dataset.triggerAction = "info";
+      infoButton.dataset.triggerName = triggerName.name;
+      infoButton.textContent = "i";
+
+      const stopButton = document.createElement("button");
+      stopButton.type = "button";
+      stopButton.className = "trigger-action-btn trigger-action-btn--stop";
+      stopButton.dataset.triggerAction = "stop";
+      stopButton.dataset.triggerName = triggerName.name;
+      stopButton.textContent = "x";
+
+      const startButton = document.createElement("button");
+      startButton.type = "button";
+      startButton.className = "trigger-action-btn trigger-action-btn--start";
+      startButton.dataset.triggerAction = "start";
+      startButton.dataset.triggerName = triggerName.name;
+      startButton.textContent = "▶";
+
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "trigger-action-btn trigger-action-btn--delete";
+      deleteButton.dataset.triggerAction = "delete";
+      deleteButton.dataset.triggerName = triggerName.name;
+      deleteButton.textContent = "del";
+
+      actions.appendChild(infoButton);
+      actions.appendChild(startButton);
+      actions.appendChild(stopButton);
+      actions.appendChild(deleteButton);
+
+      item.appendChild(meta);
+      item.appendChild(actions);
+      ActiveTriggersList.appendChild(item);
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+async function stopTrigger(triggerName: string) {
+  try {
+    await invoke("stop_trigger", { name: triggerName });
+    await refreshActiveTriggers();
+  } catch (e) {
+    console.error(e);
+    digitalAlart("Error", `${e}`, "Error");
+  }
+}
+
+async function startTrigger(triggerName: string) {
+  try {
+    await invoke("start_trigger", { name: triggerName });
+    await refreshActiveTriggers();
+  } catch (e) {
+    console.error(e);
+    digitalAlart("Error", `${e}`, "Error");
+  }
+}
+
+async function deleteTrigger(triggerName: string) {
+  try {
+    await invoke("delete_trigger", { name: triggerName });
+    await refreshActiveTriggers();
+  } catch (e) {
+    console.error(e);
+    digitalAlart("Error", `${e}`, "Error");
+  }
+}
+
+async function openTriggerInfo(triggerName: string) {
+  if (!TriggerInfoWindow || !TriggerInfoContent) {
+    return;
+  }
+
+  try {
+    const trigger = await invoke("get_trigger_details", { name: triggerName });
+    TriggerInfoContent.textContent = JSON.stringify(trigger, null, 2);
+    TriggerInfoWindow.style.display = "block";
+  } catch (e) {
+    console.error(e);
+    digitalAlart("Error", `${e}`, "Error");
+  }
+}
+
+async function closeTriggerInfo() {
+  if (TriggerInfoWindow) {
+    TriggerInfoWindow.style.display = "none";
+  }
+}
+
 // Expose functions to the global scope
 (window as any).Create = Create;
 (window as any).digitalAlart = digitalAlart;
@@ -432,6 +582,11 @@ async function closeDocs() {
 (window as any).openDocs = openDocs;
 (window as any).closeDocs = closeDocs;
 (window as any).saveNotifySettings = saveNotifySettings;
+(window as any).stopTrigger = stopTrigger;
+(window as any).startTrigger = startTrigger;
+(window as any).deleteTrigger = deleteTrigger;
+(window as any).openTriggerInfo = openTriggerInfo;
+(window as any).closeTriggerInfo = closeTriggerInfo;
 
 // Event Listeners
 
@@ -559,4 +714,31 @@ window.addEventListener("DOMContentLoaded", () => {
       TriggerList.add(new Option(trigger, trigger));
     }
   });
+
+  refreshActiveTriggers();
+  window.setInterval(refreshActiveTriggers, 1000);
+});
+
+ActiveTriggersList.addEventListener("click", async (event) => {
+  const target = event.target as HTMLElement;
+  const stopButton = target.closest("button[data-trigger-name]") as HTMLButtonElement | null;
+
+  if (!stopButton) {
+    return;
+  }
+
+  const triggerName = stopButton.dataset.triggerName;
+  const triggerAction = stopButton.dataset.triggerAction;
+
+  if (triggerName && triggerAction) {
+    if (triggerAction === "stop") {
+      await stopTrigger(triggerName);
+    } else if (triggerAction === "start") {
+      await startTrigger(triggerName);
+    } else if (triggerAction === "delete") {
+      await deleteTrigger(triggerName);
+    } else if (triggerAction === "info") {
+      await openTriggerInfo(triggerName);
+    }
+  }
 });

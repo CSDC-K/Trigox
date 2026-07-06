@@ -13,6 +13,7 @@
 
   border: 2px solid rgb(187, 187, 187);
   border-radius: 15px;
+  overflow: hidden;
 }
 
 .listofPIDwindow{
@@ -612,6 +613,204 @@
   background-color: rgb(43, 192, 20);
 }
 
+.active-triggers-panel {
+  position: absolute;
+  top: 52%;
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(246, 246, 246, 0.98));
+  border: 2px solid rgb(187, 187, 187);
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-sizing: border-box;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.active-triggers-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.active-triggers-title {
+  margin: 0;
+  font-family: "Audiowide", sans-serif;
+  font-size: 22px;
+}
+
+.active-triggers-subtitle {
+  margin: 4px 0 0;
+  font-family: "Anta", sans-serif;
+  font-size: 14px;
+  color: rgb(90, 90, 90);
+}
+
+.active-triggers-list {
+  margin-top: 14px;
+  height: calc(100% - 52px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 4px;
+}
+
+.active-triggers-empty {
+  margin: 0;
+  padding: 16px;
+  font-family: "Anta", sans-serif;
+  font-size: 16px;
+  color: rgb(110, 110, 110);
+  background-color: rgb(240, 240, 240);
+  border: 1px dashed rgb(187, 187, 187);
+  border-radius: 10px;
+}
+
+.active-trigger-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 14px;
+  background-color: rgb(255, 255, 255);
+  border: 1px solid rgb(205, 205, 205);
+  border-radius: 10px;
+  box-sizing: border-box;
+}
+
+.active-trigger-item--stopped {
+  opacity: 0.65;
+}
+
+.active-trigger-meta {
+  min-width: 0;
+}
+
+.active-trigger-name {
+  margin: 0;
+  font-family: "Anta", sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.active-trigger-status {
+  margin: 4px 0 0;
+  font-family: "Anta", sans-serif;
+  font-size: 13px;
+  color: rgb(90, 90, 90);
+}
+
+.trigger-action-group {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.trigger-action-btn {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgb(187, 187, 187);
+  border-radius: 8px;
+  color: white;
+  font-family: "Audiowide", sans-serif;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.trigger-action-btn--stop {
+  background-color: rgb(235, 92, 92);
+  border-color: rgb(180, 70, 70);
+}
+
+.trigger-action-btn--start {
+  background-color: rgb(39, 214, 12);
+  border-color: rgb(31, 176, 10);
+}
+
+.trigger-action-btn--info {
+  background-color: rgb(8, 100, 221);
+  border-color: rgb(18, 89, 182);
+}
+
+.trigger-action-btn--delete {
+  background-color: rgb(120, 120, 120);
+  border-color: rgb(95, 95, 95);
+}
+
+.trigger-action-btn:hover {
+  filter: brightness(0.95);
+}
+
+.trigger-action-btn--stop:hover {
+  background-color: rgb(215, 74, 74);
+}
+
+.trigger-action-btn--delete:hover {
+  background-color: rgb(102, 102, 102);
+}
+
+.trigger-action-btn:focus-visible {
+  outline: 2px solid rgb(90, 140, 255);
+  outline-offset: 2px;
+}
+
+.triggerinfowindow {
+  display: none;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.triggerinfocentraldiv {
+  width: 520px;
+  height: 420px;
+  background-color: rgb(255, 255, 255);
+  border: 2px solid rgb(187, 187, 187);
+  border-radius: 15px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.triggerinfocontent {
+  margin-top: 55px;
+  height: 330px;
+  overflow-y: auto;
+  background-color: rgb(240, 240, 240);
+  border: 1px solid rgb(187, 187, 187);
+  border-radius: 10px;
+  padding: 14px;
+  box-sizing: border-box;
+  font-family: "Anta", sans-serif;
+  font-size: 14px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.closetriggerinfo {
+  position: absolute;
+  top: 19%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.closetriggerinfo:hover {
+  background-color: rgb(220, 220, 220);
+  cursor: pointer;
+}
+
 /* Webhook Settings Menu Elements */
 .webhookdiv {
   display: none;
@@ -697,10 +896,10 @@
 /* Documentation Window Styles */
 .docs-btn {
   position: absolute;
-  top: 41%;
-  left: 93%;
-  width: 45px;
-  height: 45px;
+  top: 35%;
+  left: 40px;
+  width: 190px;
+  height: 35px;
   background-color: rgb(240, 240, 240);
   border: 1px solid black;
   border-radius: 5px;

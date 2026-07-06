@@ -25,20 +25,10 @@
     </label>
     <input type="text" placeholder="Select a name for trigger" class="nameinput" id="nameinput">
 
-
-    <label>
-      <p class="subtitle timeinputtitle">
-        Execute after
-      </p>
-    </label>
-    <input type="number" placeholder="Num" class="timeinput" id="timeinput">
-    <select class="timeunitlist" id="timeunitlist">
-      <option value="Seconds">Seconds</option>
-      <option value="Minutes">Minutes</option>
-      <option value="Hours">Hours</option>
-      <option value="Days">Days</option>
-      <option value="Weeks">Weeks</option>
-    </select>
+    <b style="position: absolute; top: 10px; right: 800px;">Version 0.1.0</b>
+    <button class="docs-btn" id="docsBtn" style="display: none;" onclick="openDocs()">
+      <img src="src/assets/info.png" width="25px" height="25px" alt="docs">
+    </button>
 
     <div class="linediv middleline"></div>
 
@@ -110,10 +100,29 @@
       </div>
 
     </div>
-    <button class="docs-btn" id="docsBtn" style="display: none;" onclick="openDocs()">
-      <img src="src/assets/info.png" width="25px" height="25px" alt="docs">
-    </button>
+
     <button class="create-btn" id="createTriggerBtn" style="display: none;" onclick="Create()">Create Trigger</button>
+
+    <section class="active-triggers-panel" aria-label="Active triggers">
+      <div class="active-triggers-header">
+        <div>
+          <p class="active-triggers-title">Active Triggers</p>
+          <p class="active-triggers-subtitle">Saved triggers appear here. Use x to stop and play to start.</p>
+        </div>
+      </div>
+      <div class="active-triggers-list" id="activeTriggersList"></div>
+    </section>
+  </div>
+
+  <div class="triggerinfowindow" id="triggerinfowindow" style="display: none;">
+    <div class="triggerinfocentraldiv">
+      <h1 class="title notifytitle">Trigger Info</h1>
+      <pre class="triggerinfocontent" id="triggerinfocontent"></pre>
+    </div>
+
+    <button class="closetriggerinfo" id="closetriggerinfo" onclick="closeTriggerInfo()">
+      <img src="src/assets/close.png" width="20px" height="20px" alt="icon">
+    </button>
   </div>
 
 

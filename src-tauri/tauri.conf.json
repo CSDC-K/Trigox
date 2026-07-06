@@ -30,7 +30,8 @@
     "resources": [
       "../src/assets/success.png",
       "../src/assets/error.png",
-      "../src/assets/warning.png"
+      "../src/assets/warning.png",
+      "../src/assets/notification.png"
     ],
     "icon": [
       "icons/32x32.png",

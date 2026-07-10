@@ -48,6 +48,41 @@
         Select target folder
       </label>
       <input type="button" class="targetfolder" id="targetfolder" value="Select a target folder" onclick="FolderDialog()">
+
+      <div class="checkbox-group">
+        <label class="custom-checkbox">
+          <input type="checkbox" id="runShellCheck">
+          <span class="checkmark"></span>
+          Run Shell Script
+        </label>
+        <label class="custom-checkbox">
+          <input type="checkbox" id="showNotifCheck">
+          <span class="checkmark"></span>
+          Show Notification
+        </label>
+        <label class="custom-checkbox">
+          <input type="checkbox" id="soundPlayCheck">
+          <span class="checkmark"></span>
+          Play Sound
+        </label>
+        <label class="custom-checkbox">
+          <input type="checkbox" id="autoRestartCheck">
+          <span class="checkmark"></span>
+          Webhook
+        </label>
+      </div>            
+
+      <div class="linediv middleline2"></div>
+      
+      <div class="subtitle advanced-settings" id="advancedSettings">
+        <p class="subtitle advanced-title">Advanced Settings</p>
+        <label class="adv-label">Scan per second</label>
+        <input type="text" placeholder="e.g. 1.0" class="adv-input" id="advInput1">
+        <label class="adv-label">Spam limit</label>
+        <input type="text" placeholder="e.g. 5" class="adv-input" id="advInput2">
+      </div>
+
+
     </div>
 
 
@@ -117,7 +152,14 @@
   <div class="triggerinfowindow" id="triggerinfowindow" style="display: none;">
     <div class="triggerinfocentraldiv">
       <h1 class="title notifytitle">Trigger Info</h1>
-      <pre class="triggerinfocontent" id="triggerinfocontent"></pre>
+      <textarea class="triggerinfocontent" id="triggerinfocontent" wrap="off"></textarea>
+      <button class="saveinfo-btn" id="saveinfo-btn" onclick="saveTriggerInfo()">
+        <img src="src/assets/save.png" width="20px" height="20px" alt="icon">
+      </button>
+      <button class="reverse-btn" id="reverse-btn" onclick="reverseTriggerInfo()">
+        <a>Reverse</a>
+      </button>
+
     </div>
 
     <button class="closetriggerinfo" id="closetriggerinfo" onclick="closeTriggerInfo()">
@@ -178,10 +220,55 @@
     <div class="docscentraldiv">
       <h1 class="title notifytitle" style="top: 8%;">Documentation</h1>
       <div class="docscontent">
-        <p>This is the documentation area...</p>
-        <p>You can add your detailed help guides and settings explanations here.</p>
-        <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-        <p>End of documentation. (Scroll test)</p>
+        <section>
+          <h2>What Trigox does</h2>
+          <p>Trigox creates local triggers for file events or app state changes. You give each trigger a name, choose a trigger type, confirm the target, and select the actions you want to run.</p>
+        </section>
+
+        <section>
+          <h2>Supported triggers</h2>
+          <p>Folder trigger: Folder Change.</p>
+          <p>File trigger: File Change.</p>
+          <p>App triggers: Open App, Close App.</p>
+        </section>
+
+        <section>
+          <h2>How to create one</h2>
+          <p>1. Enter a trigger name.</p>
+          <p>2. Pick a trigger type.</p>
+          <p>3. Confirm the target PID or choose the target folder.</p>
+          <p>4. Enable one or more actions: Notification, Shell Script, Play Sound, or Webhook.</p>
+          <p>5. Set the scan interval and spam limit, then create the trigger.</p>
+        </section>
+
+        <section>
+          <h2>Webhook</h2>
+          <p>The webhook option stores a URL in the trigger config. Use this as a target endpoint contract: accept a JSON POST request and return a 2xx response.</p>
+          <p>Example endpoint URL:</p>
+          <pre><code>https://api.example.com/trigox/webhook</code></pre>
+          <p>Example payload fields:</p>
+          <pre><code>{
+  &quot;triggerName&quot;: &quot;Folder Watch&quot;,
+  &quot;triggerType&quot;: &quot;ChangeFile&quot;,
+  &quot;title&quot;: &quot;Trigox alert&quot;,
+  &quot;message&quot;: &quot;A trigger fired&quot;,
+  &quot;timestamp&quot;: &quot;2026-07-09T12:00:00Z&quot;
+}</code></pre>
+          <p>Example curl request:</p>
+          <pre><code>curl -X POST &quot;https://api.example.com/trigox/webhook&quot; \
+  -H &quot;Content-Type: application/json&quot; \
+  -d '{
+    &quot;triggerName&quot;: &quot;Folder Watch&quot;,
+    &quot;triggerType&quot;: &quot;ChangeFile&quot;,
+    &quot;title&quot;: &quot;Trigox alert&quot;,
+    &quot;message&quot;: &quot;A trigger fired&quot;
+  }'</code></pre>
+        </section>
+
+        <section>
+          <h2>Tips</h2>
+          <p>App triggers need a confirmed PID before creation. The active trigger list shows saved triggers, and you can stop or start them from there.</p>
+        </section>
       </div>
     </div>
     

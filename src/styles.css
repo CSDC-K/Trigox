@@ -786,17 +786,58 @@
 
 .triggerinfocontent {
   margin-top: 55px;
+  width: 250px;
   height: 330px;
-  overflow-y: auto;
+  overflow: auto;
   background-color: rgb(240, 240, 240);
   border: 1px solid rgb(187, 187, 187);
   border-radius: 10px;
   padding: 14px;
   box-sizing: border-box;
-  font-family: "Anta", sans-serif;
+  font-family: monospace;
   font-size: 14px;
-  white-space: pre-wrap;
-  word-break: break-word;
+  white-space: pre;
+  resize: none;
+}
+
+.saveinfo-btn {
+  position: absolute;
+  top: 60%;
+  left: 75%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 35px;
+  background-color: rgb(240, 240, 240);
+  border: 1px solid black;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.saveinfo-btn:hover {
+  background-color: rgb(220, 220, 220);
+}
+
+.reverse-btn {
+  position: absolute;
+  top: 35%;
+  left: 75%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 35px;
+  background-color: rgb(240, 240, 240);
+  border: 1px solid black;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.reverse-btn:hover {
+  background-color: rgb(220, 220, 220);
 }
 
 .closetriggerinfo {

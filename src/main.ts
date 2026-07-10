@@ -61,7 +61,7 @@ const CreateTriggerBtn = document.getElementById("createTriggerBtn") as HTMLButt
 const DocsBtn = document.getElementById("docsBtn") as HTMLButtonElement;
 const ActiveTriggersList = document.getElementById("activeTriggersList") as HTMLDivElement;
 const TriggerInfoWindow = document.querySelector(".triggerinfowindow") as HTMLDivElement;
-const TriggerInfoContent = document.getElementById("triggerinfocontent") as HTMLPreElement;
+const TriggerInfoContent = document.getElementById("triggerinfocontent") as HTMLTextAreaElement;
 
 const PidTitle = document.getElementById("pidtitle") as HTMLHeadingElement;
 
@@ -95,8 +95,8 @@ var SpamLimit = 5;
 // Main variables
 var TriggerName = "";
 var TriggerType = "";
-var ExecuteAfter = 0;
 
+var activeInfoTriggerName = "";
 
 // Functions
 
@@ -112,7 +112,76 @@ async function Create() {
     var AppTriggers = await invoke<string[]>("get_app_triggers");
 
     if (FileTriggers.includes(TriggerType)) {
+      
+      // Validation of inputs and settings
+
+      if (!TargetFolderValue) {
+        digitalAlart("Error", "Target folder is not selected. Please select a target folder.", "Error");
+        return;
+      }
+
+      SpamLimit = parseInt(advInput2.value) || 5;
+      ScanPerSecond = parseFloat(advInput1.value) || 1.0;
+
+      TriggerName = triggernameInput.value;
+
+      if (!TriggerName.trim()) {
+        digitalAlart("Error", "Trigger name cannot be empty. Please enter a name for the trigger.", "Error");
+        return;
+      }
+
+      // If all validations are passed, create the trigger
+
+      const selectedActions: Actions[] = [];
+
+      if (CheckBoxNotify.checked) {
+        NotifyTitle = notifyTitleInput.value;
+        NotifyMessage = notifyMessageInput.value;
+
+        let hasPermission = await isPermissionGranted();
+        if (!hasPermission) {
+          const permission = await requestPermission();
+          if (permission !== "granted") {
+            console.error("Notification permission denied");
+            CheckBoxNotify.checked = false;
+            digitalAlart("Error", "Notification permission denied. Please allow notifications to use this feature.", "Error");
+            return;
+          }
+        }
+
+        if (!NotifyTitle.trim() || !NotifyMessage.trim()) {
+          digitalAlart("Error", "Notification option is checked but title or message is empty. Please enter a title and message for the notification.", "Error");
+          return;
+        }
+
+        selectedActions.push({
+          Action: "Notify",
+          ActionData: { Title: NotifyTitle, Message: NotifyMessage }
+        });
+      }
+
+      try {
+        await invoke("create_trigger_handled", {
+          name: TriggerName,
+          triggerType: TriggerType,
+          actions: selectedActions,
+          otherValues: {
+            FilePath: TargetFolderValue,
+            CheckingInterval: ScanPerSecond,
+            SpamLimit: SpamLimit
+          }
+        });
+      } catch(e) {
+        console.error(e);
+        digitalAlart("Error", `${e}`, "Error");
+        return;
+      }
+
+      digitalAlart("Success", `Trigger "${TriggerName}" created successfully!`, "Success");
+      await refreshActiveTriggers();
       return;
+
+
     } if (AppTriggers.includes(TriggerType)) {
       
         // Validation of inputs and settings
@@ -184,7 +253,6 @@ async function Create() {
         }
 
         TriggerName = triggernameInput.value;
-        ExecuteAfter = parseInt(timeInput.value) || 0;
         
 
         if (!TriggerName.trim()) {
@@ -278,8 +346,10 @@ async function FolderDialog() {
     title: "Select Target Folder",
   }) as string;
 
+
   if (TargetFolderValue) {
     TargetFolderInput.value = TargetFolderValue;
+      console.log("Selected folder:", TargetFolderInput.value);
   }
 
   else {
@@ -554,8 +624,9 @@ async function openTriggerInfo(triggerName: string) {
 
   try {
     const trigger = await invoke("get_trigger_details", { name: triggerName });
-    TriggerInfoContent.textContent = JSON.stringify(trigger, null, 2);
+    TriggerInfoContent.value = JSON.stringify(trigger, null, 2);
     TriggerInfoWindow.style.display = "block";
+    activeInfoTriggerName = triggerName;
   } catch (e) {
     console.error(e);
     digitalAlart("Error", `${e}`, "Error");
@@ -565,6 +636,45 @@ async function openTriggerInfo(triggerName: string) {
 async function closeTriggerInfo() {
   if (TriggerInfoWindow) {
     TriggerInfoWindow.style.display = "none";
+  }
+}
+
+async function saveTriggerInfo() {
+  if (!TriggerInfoContent) {
+    return;
+  }
+
+  try {
+    const triggerDetails = JSON.parse(TriggerInfoContent.value);
+    await invoke("update_trigger_details", { details: triggerDetails , oldName: activeInfoTriggerName });
+    digitalAlart("Success", "Trigger details updated successfully.", "Success");
+    await refreshActiveTriggers();
+    await closeTriggerInfo();
+  } catch (e) {
+    console.error(e);
+    digitalAlart("Error", `Failed to update trigger details: ${e}`, "Error");
+  }
+}
+
+async function reverseTriggerInfo() {
+  // same method as openTriggerInfo but without changing the activeInfoTriggerName
+
+  if (!TriggerInfoContent) {
+    return;
+  }
+
+  try {
+    const trigger = await invoke("get_trigger_details", { name: activeInfoTriggerName });
+    
+    // clearing the textarea before setting the value to avoid any residual data
+    TriggerInfoContent.value = "";
+
+    TriggerInfoContent.value = JSON.stringify(trigger, null, 2);
+    TriggerInfoWindow.style.display = "block";
+    activeInfoTriggerName = activeInfoTriggerName;
+  } catch (e) {
+    console.error(e);
+    digitalAlart("Error", `${e}`, "Error");
   }
 }
 
@@ -587,6 +697,8 @@ async function closeTriggerInfo() {
 (window as any).deleteTrigger = deleteTrigger;
 (window as any).openTriggerInfo = openTriggerInfo;
 (window as any).closeTriggerInfo = closeTriggerInfo;
+(window as any).saveTriggerInfo = saveTriggerInfo;
+(window as any).reverseTriggerInfo = reverseTriggerInfo;
 
 // Event Listeners
 

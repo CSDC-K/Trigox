@@ -12,17 +12,14 @@ use tauri_plugin_notification::NotificationExt;
 use tokio::time::{sleep, Duration};
 use tokio_util::sync::CancellationToken;
 
-const PROCESS_CHECK_INTERVAL_SECS: f32 = 0.5;
-
 // Definations
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 enum Triggers {
+    // Folder triggers
+    FolderChange,
     // File triggers
-    NewFile,
-    ChangeFile,
-    MoveFile,
-    DeleteFile,
+    FileChange,
     // App triggers
     OpenApp,
     CloseApp,
@@ -55,10 +52,6 @@ fn default_trigger_state() -> bool {
 struct TriggerOverview {
     name: String,
     state: bool,
-}
-
-struct TriggerCache {
-    cache: HashMap<String, Trigger>,
 }
 
 #[derive(serde::Serialize)]
@@ -181,10 +174,7 @@ async fn create_trigger_handled(
         let new_trigger = Trigger::new(
             name.clone(),
             match trigger_type.as_str() {
-                "NewFile" => Triggers::NewFile,
-                "ChangeFile" => Triggers::ChangeFile,
-                "MoveFile" => Triggers::MoveFile,
-                "DeleteFile" => Triggers::DeleteFile,
+                "FolderChange" => Triggers::FolderChange,
                 "OpenApp" => Triggers::OpenApp,
                 "CloseApp" => Triggers::CloseApp,
                 _ => {
@@ -239,10 +229,7 @@ async fn create_trigger(
         println!("{:?}", action);
     };
     let trigger_type = match trigger_type.as_str() {
-        "NewFile" => Triggers::NewFile,
-        "ChangeFile" => Triggers::ChangeFile,
-        "MoveFile" => Triggers::MoveFile,
-        "DeleteFile" => Triggers::DeleteFile,
+        "FolderChange" => Triggers::FolderChange,
         "OpenApp" => Triggers::OpenApp,
         "CloseApp" => Triggers::CloseApp,
         _ => {
@@ -267,25 +254,25 @@ async fn watch_trigger(
     handle: &mut AppHandle,
 ) {
     match trigger_type {
-        Triggers::NewFile => {
-            // Watch for new file creation
-            println!("Watching for new file creation...");
-            // Implement the logic to watch for new file creation and execute actions
+        Triggers::FolderChange => {
+            println!("Watching for folder changes...");
+            watch_path(
+                trigger_name,
+                cancellation_token,
+                handle,
+                actions,
+                other_values
+            ).await;
         }
-        Triggers::ChangeFile => {
-            // Watch for file changes
+        Triggers::FileChange => {
             println!("Watching for file changes...");
-            // Implement the logic to watch for file changes and execute actions
-        }
-        Triggers::MoveFile => {
-            // Watch for file moves
-            println!("Watching for file moves...");
-            // Implement the logic to watch for file moves and execute actions
-        }
-        Triggers::DeleteFile => {
-            // Watch for file deletions
-            println!("Watching for file deletions...");
-            // Implement the logic to watch for file deletions and execute actions
+            watch_path(
+                trigger_name,
+                cancellation_token,
+                handle,
+                actions,
+                other_values
+            ).await;
         }
         Triggers::OpenApp => {
             println!("Watching for app openings...");
@@ -458,6 +445,43 @@ async fn execute_action(handle: &AppHandle, action: &Actions) {
     }
 }
 
+
+#[tauri::command]
+async fn update_trigger_details(handle: AppHandle, details : Value, old_name: String) -> Result<(), String> {
+    let mut handle_clone = handle;
+    let name = details
+        .get("name")
+        .and_then(Value::as_str)
+        .ok_or("Trigger name is missing.")?;
+    println!("Updating trigger details for: {}", name);
+    println!("Old trigger name: {}", old_name);
+    stop_trigger(handle_clone.clone(), old_name.clone()).await?;
+    remove_thread_from_cache(&handle_clone, &old_name);
+    delete_trigger_rs(handle_clone.clone(), old_name.to_string()).await?;
+    let path = trigger_path(&handle_clone);
+    let contents = fs::read_to_string(&path)
+        .map_err(|e| format!("Failed to read triggers.json file: {}", e))?;
+
+    let mut current_data: Value = serde_json::from_str(&contents).unwrap_or_else(|_| json!({}));
+    let Some(map) = current_data.as_object_mut() else {
+        return Err("Failed to parse triggers.json file.".into());
+    };
+
+    map.insert(name.to_string(), details.clone());
+
+    let pretty_current_data = serde_json::to_string_pretty(&current_data)
+        .map_err(|e| format!("Json Parsing error! {}", e))?;
+    fs::write(&path, pretty_current_data)
+        .map_err(|e| format!("Failed to write to triggers.json file: {}", e))?;
+
+
+
+    let _ = start_trigger_rs(&mut handle_clone, name.to_string()).await;
+
+    Ok(())
+
+}
+
 fn remove_thread_from_cache(handle: &AppHandle, thread_name: &str) {
     let state = handle.state::<Mutex<ThreadMap>>();
     let mut thread_map = state.lock().unwrap();
@@ -575,6 +599,29 @@ async fn delete_trigger(handle: AppHandle, name: String) -> Result<(), String> {
     Ok(())
 }
 
+
+async fn delete_trigger_rs(handle: AppHandle, name: String) -> Result<(), String> {
+    let _ = stop_trigger(handle.clone(), name.clone()).await;
+
+    let path = trigger_path(&handle);
+    let contents = fs::read_to_string(&path)
+        .map_err(|e| format!("Failed to read triggers.json file: {}", e))?;
+
+    let mut current_data: Value = serde_json::from_str(&contents).unwrap_or_else(|_| json!({}));
+    let Some(map) = current_data.as_object_mut() else {
+        return Err("Failed to parse triggers.json file.".into());
+    };
+
+    map.remove(&name);
+
+    let pretty_current_data = serde_json::to_string_pretty(&current_data)
+        .map_err(|e| format!("Json Parsing error! {}", e))?;
+    fs::write(&path, pretty_current_data)
+        .map_err(|e| format!("Failed to write to triggers.json file: {}", e))?;
+
+    Ok(())
+}
+
 fn normalize_process_name(process_name: &str) -> String {
     process_name.trim().to_ascii_lowercase()
 }
@@ -585,6 +632,51 @@ fn is_process_running(system: &System, process_name: &str) -> bool {
     system.processes().values().any(|process| {
         normalize_process_name(process.name().to_string_lossy().as_ref()) == normalized_target
     })
+}
+
+async fn watch_path(thread_name: String, cancellation_token: CancellationToken, handle: &mut AppHandle, actions: Vec<Actions>, other_values: OtherValues) {
+    let Some(file_path) = other_values.FilePath else {
+        eprintln!("Trigger '{}' does not have a FilePath.", thread_name);
+        remove_thread_from_cache(handle, &thread_name);
+        return;
+    };
+
+    let path = PathBuf::from(file_path);
+
+    if !path.exists() {
+        eprintln!("File path '{:?}' for trigger '{}' does not exist.", path, thread_name);
+        remove_thread_from_cache(handle, &thread_name);
+        return;
+    }
+
+    let mut last_modified = fs::metadata(&path)
+        .and_then(|metadata| metadata.modified())
+        .unwrap_or_else(|_| std::time::SystemTime::UNIX_EPOCH);
+
+    loop {
+        tokio::select! {
+            _ = cancellation_token.cancelled() => {
+                println!("Trigger '{}' has been cancelled.", thread_name);
+                println!("Thread will be deleted from the cache.");
+                let _ = update_trigger_state_in_storage(handle, &thread_name, false);
+                remove_thread_from_cache(handle, &thread_name);
+                break;
+            }
+
+            _ = sleep(Duration::from_secs_f32(other_values.CheckingInterval)) => {
+                println!("Checking file '{:?}' for trigger '{}'.", path, thread_name);
+                if let Ok(metadata) = fs::metadata(&path) {
+                    if let Ok(modified) = metadata.modified() {
+                        if modified > last_modified {
+                            println!("File '{:?}' for trigger '{}' has changed.", path, thread_name);
+                            execute_actions(handle, &actions).await;
+                            last_modified = modified;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 async fn watch_process_by_name(
@@ -628,6 +720,7 @@ async fn watch_process_by_name(
             }
             
             _ = sleep(Duration::from_secs_f32(other_values.CheckingInterval)) => {
+                println!("Checking process '{}' for trigger '{}'.", process_name, thread_name);
                 system.refresh_all();
                 current_state = is_process_running(&system, &process_name);
 
@@ -651,10 +744,7 @@ async fn watch_process_by_name(
 #[tauri::command]
 fn get_all_triggers() -> Vec<String> {
     let triggers = vec![
-        Triggers::NewFile,
-        Triggers::ChangeFile,
-        Triggers::MoveFile,
-        Triggers::DeleteFile,
+        Triggers::FolderChange,
         Triggers::OpenApp,
         Triggers::CloseApp,
     ];
@@ -668,10 +758,7 @@ fn get_all_triggers() -> Vec<String> {
 #[tauri::command]
 async fn get_file_triggers() -> Vec<String> {
     let triggers = vec![
-        Triggers::NewFile,
-        Triggers::ChangeFile,
-        Triggers::MoveFile,
-        Triggers::DeleteFile,
+        Triggers::FolderChange,
     ];
 
     triggers
@@ -756,6 +843,23 @@ async fn start_trigger(handle: AppHandle, name: String) -> Result<(), String> {
     let mut local_handle = handle.clone();
     start_trigger_from_storage(&mut local_handle, &name).await
 }
+
+async fn start_trigger_rs(handle: &mut AppHandle, name: String) -> Result<(), String> {
+    update_trigger_state_in_storage(handle, &name, true)?;
+
+    let is_running = {
+        let state = handle.state::<Mutex<ThreadMap>>();
+        let thread_map = state.lock().unwrap();
+        thread_map.map.contains_key(&name)
+    };
+
+    if is_running {
+        return Ok(());
+    }
+
+    start_trigger_from_storage(handle, &name).await
+}
+
 
 // PID Functions
 #[tauri::command]
@@ -904,8 +1008,11 @@ pub fn run() {
             checkPID,
             listPID,
             infoPID,
-            create_trigger_handled
+            create_trigger_handled,
+            update_trigger_details
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
+
+// we going to reach TOUSENDS of lines of code in this file, but don't forget the word of Terry Davis: "Code is like humor. When you have to explain it, it’s bad."

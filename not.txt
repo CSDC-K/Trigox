@@ -1,4 +1,0 @@
-main.ts 95
-
-
-processId kabul etmiyor ona bak.

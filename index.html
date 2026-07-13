@@ -44,6 +44,47 @@
     <div class="linediv centerline"></div> 
 
     <div style="display: none;" id="FileTriggerDiv">
+      <label class="subtitle targetfiletitle">
+        Select target file
+      </label>
+      <input type="button" class="targetfile" id="targetfile" value="Select a target file" onclick="FileDialog()">
+
+      <div class="checkbox-group">
+        <label class="custom-checkbox">
+          <input type="checkbox" id="runShellCheck">
+          <span class="checkmark"></span>
+          Run Shell Script
+        </label>
+        <label class="custom-checkbox">
+          <input type="checkbox" id="showNotifCheck">
+          <span class="checkmark"></span>
+          Show Notification
+        </label>
+        <label class="custom-checkbox">
+          <input type="checkbox" id="soundPlayCheck">
+          <span class="checkmark"></span>
+          Play Sound
+        </label>
+        <label class="custom-checkbox">
+          <input type="checkbox" id="webhookCheck">
+          <span class="checkmark"></span>
+          Webhook
+        </label>
+      </div>            
+
+      <div class="linediv middleline2"></div>
+      
+      <div class="subtitle advanced-settings" id="advancedSettings">
+        <p class="subtitle advanced-title">Advanced Settings</p>
+        <label class="adv-label">Scan per second</label>
+        <input type="text" placeholder="e.g. 1.0" class="adv-input" id="advInput1">
+        <label class="adv-label">Spam limit</label>
+        <input type="text" placeholder="e.g. 5" class="adv-input" id="advInput2">
+      </div>
+    </div>
+
+
+    <div style="display: none;" id="FolderTriggerDiv">
       <label class="subtitle targetfoldertitle">
         Select target folder
       </label>
@@ -66,7 +107,7 @@
           Play Sound
         </label>
         <label class="custom-checkbox">
-          <input type="checkbox" id="autoRestartCheck">
+          <input type="checkbox" id="webhookCheck">
           <span class="checkmark"></span>
           Webhook
         </label>
@@ -118,7 +159,7 @@
           Play Sound
         </label>
         <label class="custom-checkbox">
-          <input type="checkbox" id="autoRestartCheck">
+          <input type="checkbox" id="webhookCheck">
           <span class="checkmark"></span>
           Webhook
         </label>
@@ -205,6 +246,8 @@
       <h1 class="title notifytitle">Webhook</h1>
       <label class="webhookinputlabel">Enter Webhook URL</label>
       <input type="text" placeholder="https://..." class="webhookinput" id="webhookinput">
+      <label class="webhookmessageinputlabel">Enter Webhook Message</label>
+      <input type="text" placeholder="Message for webhook" class="webhookmessageinput" id="webhookmessageinput">
       <button class="savewebhook" id="savewebhook" onclick="saveWebhookSettings()">
         <img src="src/assets/save.png" width="20px" height="20px" alt="icon">
       </button>

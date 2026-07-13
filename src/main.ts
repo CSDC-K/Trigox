@@ -17,20 +17,21 @@ interface TriggerOverview {
   state: boolean;
 }
 
-interface OtherValues {
+export interface OtherValues {
   Pid?: number;
-  FilePath?: string;
+  Path?: string;
   ProcessName?: string;
   CheckingInterval: number;
   SpamLimit: number;
   TriggerLimit?: number;
+  WebhookUrl?: string;
 }
 
 type Actions = 
  | { Action: "Notify", ActionData: { Title: string, Message: string } }
  | { Action: "ShellScript", ActionData: { ScriptPath: string } }
  | { Action: "PlaySound", ActionData: { SoundPath: string } }
- | { Action: "Webhook", ActionData: { HookUrl: string } }
+ | { Action: "Webhook", ActionData: { HookUrl: string, HookMessage: string } }
 
 
 
@@ -41,18 +42,19 @@ const TriggerList = document.getElementById("triggerlist") as HTMLSelectElement;
 const PidList = document.getElementById("pid-list") as HTMLUListElement;
 
 const TargetFolderInput = document.getElementById("targetfolder") as HTMLInputElement;
+const TargetFileInput = document.getElementById("targetfile") as HTMLInputElement;
 const TargetPIDInput = document.getElementById("targetPID") as HTMLInputElement;
 const CheckBoxShellScript = document.getElementById("runShellCheck") as HTMLInputElement;
 const CheckBoxNotify = document.getElementById("showNotifCheck") as HTMLInputElement;
 const CheckBoxSound = document.getElementById("soundPlayCheck") as HTMLInputElement;
-const CheckBoxWebhook = document.getElementById("autoRestartCheck") as HTMLInputElement;
+const CheckBoxWebhook = document.getElementById("webhookCheck") as HTMLInputElement;
 const advInput1 = document.getElementById("advInput1") as HTMLInputElement;
 const advInput2 = document.getElementById("advInput2") as HTMLInputElement;
-const timeInput = document.getElementById("timeinput") as HTMLInputElement;
 const triggernameInput = document.getElementById("nameinput") as HTMLInputElement;
 
 const FileTriggerDiv = document.getElementById("FileTriggerDiv") as HTMLDivElement;
 const AppTriggerDiv = document.getElementById("AppTriggerDiv") as HTMLDivElement;
+const FolderTriggerDiv = document.getElementById("FolderTriggerDiv") as HTMLDivElement;
 const NotifyDiv = document.getElementById("notifydiv") as HTMLDivElement;
 const WebhookDiv = document.getElementById("webhookdiv") as HTMLDivElement;
 const WebhookInput = document.getElementById("webhookinput") as HTMLInputElement;
@@ -69,18 +71,14 @@ const notifyTitleInput = document.getElementById("notifytitleinput") as HTMLInpu
 const notifyMessageInput = document.getElementById("notifymessageinput") as HTMLInputElement;
 
 
-// TriggerType based variables
+// Variables
 
-// File trigger variables
 var TargetFolderValue = TargetFolderInput.value;
-
-
-
-// App trigger variables
-var ConfirmedPID = false;
+var TargetFileValue = TargetFileInput.value;
 var TargetPIDValue = TargetPIDInput.value;
 var TargetPIDName = Promise.resolve("");
 
+var ConfirmedPID = false;
 var ShellScriptPath = "";
 var SoundPath = "";
 var WebhookUrl = "";
@@ -109,13 +107,14 @@ async function Create() {
   else {
 
     var FileTriggers = await invoke<string[]>("get_file_triggers");
+    var FolderTriggers = await invoke<string[]>("get_folder_triggers");
     var AppTriggers = await invoke<string[]>("get_app_triggers");
 
-    if (FileTriggers.includes(TriggerType)) {
+    if (FolderTriggers.includes(TriggerType)) {
       
       // Validation of inputs and settings
 
-      if (!TargetFolderValue) {
+      if (!(await invoke("checkpath", { path: TargetFolderValue }))) {
         digitalAlart("Error", "Target folder is not selected. Please select a target folder.", "Error");
         return;
       }
@@ -160,13 +159,56 @@ async function Create() {
         });
       }
 
+      if (CheckBoxShellScript.checked) {
+        if (!ShellScriptPath) {
+          digitalAlart("Error", "Shell script option is checked but no script is selected. Please select a shell script to run on trigger.", "Error");
+          return;
+        }
+
+        selectedActions.push({
+          Action: "ShellScript",
+          ActionData: { ScriptPath: ShellScriptPath }
+        });
+      }
+      
+      if (CheckBoxSound.checked) {
+        if (!SoundPath) {
+          digitalAlart("Error", "Sound play option is checked but no audio file is selected. Please select an audio file to play on trigger.", "Error");
+          return;
+        }
+
+        selectedActions.push({
+          Action: "PlaySound",
+          ActionData: { SoundPath: SoundPath }
+        });
+      }
+
+      if (CheckBoxWebhook.checked) {
+        WebhookUrl = WebhookInput.value;
+        if (!WebhookUrl.trim()) {
+          digitalAlart("Error", "Webhook option is checked but no URL is entered. Please enter a webhook URL.", "Error");
+          return;
+        }
+
+        selectedActions.push({
+          Action: "Webhook",
+          ActionData: { HookUrl: WebhookUrl , HookMessage: (document.getElementById("webhookmessageinput") as HTMLInputElement).value }
+        });
+      }
+
+
+      if (selectedActions.length === 0) {
+        digitalAlart("Error", "At least one action must be selected (Notification, Shell Script, Sound Play, Webhook). Please select at least one action to perform when the trigger is activated.", "Error");
+        return;
+      }
+
       try {
         await invoke("create_trigger_handled", {
           name: TriggerName,
           triggerType: TriggerType,
           actions: selectedActions,
           otherValues: {
-            FilePath: TargetFolderValue,
+            Path: TargetFolderValue,
             CheckingInterval: ScanPerSecond,
             SpamLimit: SpamLimit
           }
@@ -182,10 +224,124 @@ async function Create() {
       return;
 
 
-    } if (AppTriggers.includes(TriggerType)) {
+    } else if (FileTriggers.includes(TriggerType)) {
+      // Validation of inputs and settings
+
+      if (!(await invoke("checkfile", { path: TargetFileValue }))) {
+        digitalAlart("Error", "Target folder is not selected. Please select a target folder.", "Error");
+        return;
+      }
+
+      SpamLimit = parseInt(advInput2.value) || 5;
+      ScanPerSecond = parseFloat(advInput1.value) || 1.0;
+
+      TriggerName = triggernameInput.value;
+
+      if (!TriggerName.trim()) {
+        digitalAlart("Error", "Trigger name cannot be empty. Please enter a name for the trigger.", "Error");
+        return;
+      }
+
+      // If all validations are passed, create the trigger
+
+      const selectedActions: Actions[] = [];
+
+      if (CheckBoxNotify.checked) {
+        NotifyTitle = notifyTitleInput.value;
+        NotifyMessage = notifyMessageInput.value;
+
+        let hasPermission = await isPermissionGranted();
+        if (!hasPermission) {
+          const permission = await requestPermission();
+          if (permission !== "granted") {
+            console.error("Notification permission denied");
+            CheckBoxNotify.checked = false;
+            digitalAlart("Error", "Notification permission denied. Please allow notifications to use this feature.", "Error");
+            return;
+          }
+        }
+
+        if (!NotifyTitle.trim() || !NotifyMessage.trim()) {
+          digitalAlart("Error", "Notification option is checked but title or message is empty. Please enter a title and message for the notification.", "Error");
+          return;
+        }
+
+        selectedActions.push({
+          Action: "Notify",
+          ActionData: { Title: NotifyTitle, Message: NotifyMessage }
+        });
+      }
+
+      if (CheckBoxShellScript.checked) {
+        if (!ShellScriptPath) {
+          digitalAlart("Error", "Shell script option is checked but no script is selected. Please select a shell script to run on trigger.", "Error");
+          return;
+        }
+
+        selectedActions.push({
+          Action: "ShellScript",
+          ActionData: { ScriptPath: ShellScriptPath }
+        });
+      }
+      
+      if (CheckBoxSound.checked) {
+        if (!SoundPath) {
+          digitalAlart("Error", "Sound play option is checked but no audio file is selected. Please select an audio file to play on trigger.", "Error");
+          return;
+        }
+
+        selectedActions.push({
+          Action: "PlaySound",
+          ActionData: { SoundPath: SoundPath }
+        });
+      }
+
+      if (CheckBoxWebhook.checked) {
+        WebhookUrl = WebhookInput.value;
+        if (!WebhookUrl.trim()) {
+          digitalAlart("Error", "Webhook option is checked but no URL is entered. Please enter a webhook URL.", "Error");
+          return;
+        }
+
+        selectedActions.push({
+          Action: "Webhook",
+          ActionData: { HookUrl: WebhookUrl , HookMessage: (document.getElementById("webhookmessageinput") as HTMLInputElement).value }
+        });
+      }
+
+
+      if (selectedActions.length === 0) {
+        digitalAlart("Error", "At least one action must be selected (Notification, Shell Script, Sound Play, Webhook). Please select at least one action to perform when the trigger is activated.", "Error");
+        return;
+      }
+
+      try {
+        await invoke("create_trigger_handled", {
+          name: TriggerName,
+          triggerType: TriggerType,
+          actions: selectedActions,
+          otherValues: {
+            Path: TargetFileValue,
+            CheckingInterval: ScanPerSecond,
+            SpamLimit: SpamLimit
+          }
+        });
+      } catch(e) {
+        console.error(e);
+        digitalAlart("Error", `${e}`, "Error");
+        return;
+      }
+
+      digitalAlart("Success", `Trigger "${TriggerName}" created successfully!`, "Success");
+      await refreshActiveTriggers();
+      return;
+
+    } else if (AppTriggers.includes(TriggerType)) {
+    
+
       
         // Validation of inputs and settings
-
+        // yeah i know there is some differences in action checking between app and folder triggers.
         let notify = false;
         let shell = false;
         let sound = false;
@@ -200,6 +356,8 @@ async function Create() {
         } if (CheckBoxWebhook.checked) {
           webhook = true;
         }
+
+        
 
         if (!notify && !shell && !sound && !webhook) {
           digitalAlart("Error", "At least one action must be selected (Notification, Shell Script, Sound Play, Webhook). Please select at least one action to perform when the trigger is activated.", "Error");
@@ -291,9 +449,10 @@ async function Create() {
         }
         
         if (webhook) {
+          console.log("Webhook URL:", WebhookUrl);
           selectedActions.push({
             Action: "Webhook",
-            ActionData: { HookUrl: WebhookUrl }
+            ActionData: { HookUrl: WebhookUrl , HookMessage: (document.getElementById("webhookmessageinput") as HTMLInputElement).value }
           });
         }  
 
@@ -354,6 +513,26 @@ async function FolderDialog() {
 
   else {
     TargetFolderInput.value = "";
+    digitalAlart("Error", "No folder selected. Please select a target folder.", "Error");
+  }
+}
+
+
+async function FileDialog() {
+  TargetFileValue = await open({
+    directory: false,
+    multiple: false,
+    title: "Select a Target File",
+  }) as string;
+
+
+  if (TargetFolderValue) {
+    TargetFileInput.value = TargetFileValue;
+      console.log("Selected file:", TargetFileInput.value);
+  }
+
+  else {
+    TargetFileInput.value = "";
     digitalAlart("Error", "No folder selected. Please select a target folder.", "Error");
   }
 }
@@ -682,6 +861,7 @@ async function reverseTriggerInfo() {
 (window as any).Create = Create;
 (window as any).digitalAlart = digitalAlart;
 (window as any).FolderDialog = FolderDialog;
+(window as any).FileDialog = FileDialog;
 (window as any).checkPID = checkPID;
 (window as any).listPID = listPID;
 (window as any).infoPID = infoPID;
@@ -707,27 +887,44 @@ TriggerList.addEventListener("change", async () => {
 
   var FileTriggers = await invoke<string[]>("get_file_triggers");
   var AppTriggers = await invoke<string[]>("get_app_triggers");
+  var FolderTriggers = await invoke<string[]>("get_folder_triggers");
 
   if (FileTriggers.includes(TriggerList.value)) {
+    console.log("FİLE");
     TriggerType = TriggerList.value;
     FileTriggerDiv.style.display = "block";
+    FolderTriggerDiv.style.display = "none";
     AppTriggerDiv.style.display = "none";
+
     CreateTriggerBtn.style.display = "block";
     DocsBtn.style.display = "block";
   }
 
   else if (AppTriggers.includes(TriggerList.value)) {
+    console.log("APP");
     TriggerType = TriggerList.value;
     FileTriggerDiv.style.display = "none";
+    FolderTriggerDiv.style.display = "none";
     AppTriggerDiv.style.display = "block";
+
     CreateTriggerBtn.style.display = "block";
     DocsBtn.style.display = "block";
+  }
+
+  else if (FolderTriggers.includes(TriggerList.value)) {
+    console.log("FOLDER");
+    TriggerType = TriggerList.value;
+    FileTriggerDiv.style.display = "none";
+    FolderTriggerDiv.style.display = "Block";
+    AppTriggerDiv.style.display = "none";
   }
 
   else {
     TriggerType = "";
     FileTriggerDiv.style.display = "none";
+    
     AppTriggerDiv.style.display = "none";
+
     CreateTriggerBtn.style.display = "none";
     DocsBtn.style.display = "none";
   }

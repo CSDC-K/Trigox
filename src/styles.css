@@ -12,7 +12,7 @@
   transform: translate(-50%, -50%);
 
   border: 2px solid rgb(187, 187, 187);
-  border-radius: 15px;
+  border-radius: 35px;
   overflow: hidden;
 }
 
@@ -166,7 +166,14 @@
   font-family: "Anta", sans-serif;
   font-size: 20px;
 }
-  
+
+.subtitle.targetfiletitle{
+  top: 11.9%;
+  left: 325px;
+  font-family: "Anta", sans-serif;
+  font-size: 20px;
+}
+
 .subtitle.targetPIDtitle{
   top: 11.9%;
   left: 325px;
@@ -332,6 +339,27 @@
 }
 
 .targetfolder:hover{
+  background-color: rgb(220, 220, 220);
+  cursor: pointer;
+}
+
+
+.targetfile{
+  width: 187px;
+  height: 30px;
+
+  border: 1px solid black;
+  border-radius: 5px;
+
+  background-color: rgb(240, 240, 240);
+  
+  position: absolute;
+  top: 16%;
+  left: 325px;
+
+}
+
+.targetfile:hover{
   background-color: rgb(220, 220, 220);
   cursor: pointer;
 }
@@ -902,12 +930,38 @@
   background-color: rgb(220, 220, 220);
 }
 
-.savewebhook {
+
+.webhookmessageinputlabel {
+  position: absolute;
+  top: 60%;
+  left: 20px;
+  font-family: "Anta", sans-serif;
+  font-size: 18px;
+}
+
+.webhookmessageinput {
   position: absolute;
   top: 75%;
+  left: 20px;
+  width: 250px;
+  height: 30px;
+  background-color: rgb(240, 240, 240);
+  border: 1px solid black;
+  border-radius: 5px;
+  box-sizing: border-box;
+  padding-left: 10px;
+}
+
+.webhookmessageinput:hover {
+  background-color: rgb(220, 220, 220);
+}
+
+.savewebhook {
+  position: absolute;
+  top: 265px;
   left: 50%;
   transform: translateX(-50%);
-  width: 40px;
+  width: 300px;
   height: 40px;
   background-color: rgb(240, 240, 240);
   border: 1px solid black;

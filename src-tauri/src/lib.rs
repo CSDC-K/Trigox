@@ -25,13 +25,22 @@ enum Triggers {
     CloseApp,
 }
 
+#[derive(Clone, Debug, Serialize)]
+struct WebPayload {
+    triggername: String,
+    triggertype: String,
+    title: String,
+    message: String,
+    timestamp: String,
+}
+
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(tag = "Action", content = "ActionData")]
 pub enum Actions {
     Notify { Title: String, Message: String },
     ShellScript { ScriptPath: String },
     PlaySound { SoundPath: String },
-    Webhook { HookUrl: String },
+    Webhook { HookUrl: String , HookMessage: String },
 }
 
 #[derive(Default)]
@@ -75,22 +84,24 @@ struct Trigger {
 struct OtherValues {
     #[serde(skip_serializing_if = "Option::is_none")]
     Pid: Option<u32>,
-    FilePath: Option<String>,
+    Path: Option<String>,
     ProcessName: Option<String>,
     CheckingInterval: f32,
     SpamLimit: u32,
     TriggerLimit: Option<u32>,
+    WebhookUrl: Option<String>,
 }
 
 impl Default for OtherValues {
     fn default() -> Self {
         Self {
             Pid: None,
-            FilePath: None,
+            Path: None,
             ProcessName: None,
             CheckingInterval: 1.0,
             SpamLimit: 5,
             TriggerLimit: None,
+            WebhookUrl: None,
         }
     }
 }
@@ -175,9 +186,11 @@ async fn create_trigger_handled(
             name.clone(),
             match trigger_type.as_str() {
                 "FolderChange" => Triggers::FolderChange,
+                "FileChange" => Triggers::FileChange,
                 "OpenApp" => Triggers::OpenApp,
                 "CloseApp" => Triggers::CloseApp,
                 _ => {
+                    println!("T:{}", trigger_type);
                     return Err("Invalid trigger type. Please select a valid trigger type.".into());
                 }
             },
@@ -230,6 +243,7 @@ async fn create_trigger(
     };
     let trigger_type = match trigger_type.as_str() {
         "FolderChange" => Triggers::FolderChange,
+        "FileChange" => Triggers::FileChange,
         "OpenApp" => Triggers::OpenApp,
         "CloseApp" => Triggers::CloseApp,
         _ => {
@@ -266,7 +280,7 @@ async fn watch_trigger(
         }
         Triggers::FileChange => {
             println!("Watching for file changes...");
-            watch_path(
+            watch_file(
                 trigger_name,
                 cancellation_token,
                 handle,
@@ -301,18 +315,19 @@ async fn watch_trigger(
     }
 }
 
-async fn execute_actions(handle: &AppHandle, actions: &[Actions]) {
+async fn execute_actions(handle: &AppHandle, actions: &[Actions], trigger_name: String) {
     if actions.is_empty() {
         println!("No valid action found for this trigger.");
         return;
     }
 
     for action in actions {
-        execute_action(handle, action).await;
+        execute_action(handle, action, &trigger_name, &Triggers::FolderChange).await;
     }
 }
 
-async fn execute_action(handle: &AppHandle, action: &Actions) {
+async fn execute_action(handle: &AppHandle, action: &Actions, trigger_name: &str, trigger_type: &Triggers) {
+    println!("Trigger name: {}", trigger_name);
     match action {
         Actions::Notify { Title, Message } => {
             println!("Notify action: title='{}' message='{}'", Title, Message);
@@ -438,9 +453,30 @@ async fn execute_action(handle: &AppHandle, action: &Actions) {
                 eprintln!("Failed to open sound file: {}", SoundPath);
             }
         }
-        Actions::Webhook { HookUrl } => {
-            // Implement webhook logic here
-            println!("Webhook action is not implemented yet: {}", HookUrl);
+        Actions::Webhook { HookUrl , HookMessage} => {
+
+            let client = reqwest::Client::new();
+            let payload = WebPayload {
+                triggername: trigger_name.to_string().clone(),
+                triggertype: format!("{:?}", trigger_type),
+                title: "Trigger Fired".to_string(),
+                message: HookMessage.to_string(),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+            };
+
+            println!("Sending webhook to {} with payload: {:?}", HookUrl, payload);
+
+            let res = client.post(HookUrl).json(&payload).send().await;
+            match res {
+                Ok(response) => {
+                    if response.status().is_success() {
+                        println!("Webhook sent successfully to {}", HookUrl);
+                    } else {
+                        eprintln!("Webhook request failed with status: {}", response.status());
+                    }
+                }
+                Err(e) => eprintln!("Failed to send webhook request: {}", e),
+            }
         }
     }
 }
@@ -455,9 +491,8 @@ async fn update_trigger_details(handle: AppHandle, details : Value, old_name: St
         .ok_or("Trigger name is missing.")?;
     println!("Updating trigger details for: {}", name);
     println!("Old trigger name: {}", old_name);
-    stop_trigger(handle_clone.clone(), old_name.clone()).await?;
-    remove_thread_from_cache(&handle_clone, &old_name);
     delete_trigger_rs(handle_clone.clone(), old_name.to_string()).await?;
+    remove_thread_from_cache(&handle_clone, &old_name);
     let path = trigger_path(&handle_clone);
     let contents = fs::read_to_string(&path)
         .map_err(|e| format!("Failed to read triggers.json file: {}", e))?;
@@ -635,7 +670,53 @@ fn is_process_running(system: &System, process_name: &str) -> bool {
 }
 
 async fn watch_path(thread_name: String, cancellation_token: CancellationToken, handle: &mut AppHandle, actions: Vec<Actions>, other_values: OtherValues) {
-    let Some(file_path) = other_values.FilePath else {
+    let Some(file_path) = other_values.Path else {
+        eprintln!("Trigger '{}' does not have a FolderPath.", thread_name);
+        remove_thread_from_cache(handle, &thread_name);
+        return;
+    };
+
+    let path = PathBuf::from(file_path);
+
+    if !path.exists() {
+        eprintln!("Path '{:?}' for trigger '{}' does not exist.", path, thread_name);
+        remove_thread_from_cache(handle, &thread_name);
+        return;
+    }
+
+    let mut last_modified = fs::metadata(&path)
+        .and_then(|metadata| metadata.modified())
+        .unwrap_or_else(|_| std::time::SystemTime::UNIX_EPOCH);
+
+    loop {
+        tokio::select! {
+            _ = cancellation_token.cancelled() => {
+                let thread_name_clone = thread_name.clone();
+                println!("Trigger '{}' has been cancelled.", thread_name_clone);
+                println!("Thread will be deleted from the cache.");
+                break;
+            }
+
+            _ = sleep(Duration::from_secs_f32(other_values.CheckingInterval)) => {
+                let thread_name_clone = thread_name.clone();
+                println!("Checking folder '{:?}' for trigger '{}'.", path, thread_name);
+                if let Ok(metadata) = fs::metadata(&path) {
+                    if let Ok(modified) = metadata.modified() {
+                        if modified > last_modified {
+                            println!("Folder '{:?}' for trigger '{}' has changed.", path, thread_name_clone);
+                            execute_actions(handle, &actions, thread_name.clone()).await;
+                            let _ = stop_trigger(handle.clone(), thread_name_clone).await;
+                            last_modified = modified;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+async fn watch_file(thread_name: String, cancellation_token: CancellationToken, handle: &mut AppHandle, actions: Vec<Actions>, other_values: OtherValues) {
+    let Some(file_path) = other_values.Path else {
         eprintln!("Trigger '{}' does not have a FilePath.", thread_name);
         remove_thread_from_cache(handle, &thread_name);
         return;
@@ -656,20 +737,21 @@ async fn watch_path(thread_name: String, cancellation_token: CancellationToken, 
     loop {
         tokio::select! {
             _ = cancellation_token.cancelled() => {
-                println!("Trigger '{}' has been cancelled.", thread_name);
+                let thread_name_clone = thread_name.clone();
+                println!("Trigger '{}' has been cancelled.", thread_name_clone);
                 println!("Thread will be deleted from the cache.");
-                let _ = update_trigger_state_in_storage(handle, &thread_name, false);
-                remove_thread_from_cache(handle, &thread_name);
                 break;
             }
 
             _ = sleep(Duration::from_secs_f32(other_values.CheckingInterval)) => {
+                let thread_name_clone = thread_name.clone();
                 println!("Checking file '{:?}' for trigger '{}'.", path, thread_name);
                 if let Ok(metadata) = fs::metadata(&path) {
                     if let Ok(modified) = metadata.modified() {
                         if modified > last_modified {
-                            println!("File '{:?}' for trigger '{}' has changed.", path, thread_name);
-                            execute_actions(handle, &actions).await;
+                            println!("File '{:?}' for trigger '{}' has changed.", path, thread_name_clone);
+                            execute_actions(handle, &actions, thread_name.clone()).await;
+                            let _ = stop_trigger(handle.clone(), thread_name_clone).await;
                             last_modified = modified;
                         }
                     }
@@ -703,7 +785,7 @@ async fn watch_process_by_name(
             "Process '{}' for trigger '{}' already matched target state.",
             process_name, thread_name
         );
-        execute_actions(handle, &actions).await;
+        execute_actions(handle, &actions, thread_name.clone()).await;
         let _ = update_trigger_state_in_storage(handle, &thread_name, false);
         remove_thread_from_cache(handle, &thread_name);
         return;
@@ -712,26 +794,26 @@ async fn watch_process_by_name(
     loop {
         tokio::select! {
             _ = cancellation_token.cancelled() => {
-                println!("Trigger '{}' has been cancelled.", thread_name);
+                let thread_name_clone = thread_name.clone();
+                println!("Trigger '{}' has been cancelled.", thread_name_clone);
                 println!("Thread will be deleted from the cache.");
-                let _ = update_trigger_state_in_storage(handle, &thread_name, false);
-                remove_thread_from_cache(handle, &thread_name);
                 break;
             }
             
             _ = sleep(Duration::from_secs_f32(other_values.CheckingInterval)) => {
-                println!("Checking process '{}' for trigger '{}'.", process_name, thread_name);
+                let thread_name_clone = thread_name.clone();
+                println!("Checking process '{}' for trigger '{}'.", process_name, thread_name_clone);
                 system.refresh_all();
                 current_state = is_process_running(&system, &process_name);
 
                 if current_state == fire_when_running {
                     println!(
                         "Process '{}' for trigger '{}' matched target state.",
-                        process_name, thread_name
+                        process_name, thread_name_clone
                     );
-                    execute_actions(handle, &actions).await;
-                    let _ = update_trigger_state_in_storage(handle, &thread_name, false);
-                    remove_thread_from_cache(handle, &thread_name);
+                    execute_actions(handle, &actions, thread_name_clone.clone()).await;
+                    let _ = update_trigger_state_in_storage(handle, &thread_name_clone, false);
+                    remove_thread_from_cache(handle, &thread_name_clone);
                     break;
                 }
             }
@@ -744,6 +826,7 @@ async fn watch_process_by_name(
 #[tauri::command]
 fn get_all_triggers() -> Vec<String> {
     let triggers = vec![
+        Triggers::FileChange,
         Triggers::FolderChange,
         Triggers::OpenApp,
         Triggers::CloseApp,
@@ -756,9 +839,21 @@ fn get_all_triggers() -> Vec<String> {
 }
 
 #[tauri::command]
-async fn get_file_triggers() -> Vec<String> {
-    let triggers = vec![
+async fn get_folder_triggers() -> Vec<String> {
+    let triggers: Vec<Triggers> = vec![
         Triggers::FolderChange,
+    ];
+
+    triggers
+        .iter()
+        .map(|trigger| format!("{:?}", trigger))
+        .collect()
+}
+
+#[tauri::command]
+async fn get_file_triggers() -> Vec<String> {
+    let triggers: Vec<Triggers> = vec![
+        Triggers::FileChange,
     ];
 
     triggers
@@ -926,6 +1021,32 @@ async fn get_pid_info(process_id: u32) -> Option<String> {
     None
 }
 
+
+#[tauri::command]
+async fn checkpath(handle: AppHandle, path: String) -> bool {
+    let path = PathBuf::from(path);
+    if path.exists() {
+        println!("Path exists: {:?}", path);
+        true
+    } else {
+        println!("Path does not exist: {:?}", path);
+        false
+    }
+}
+
+#[tauri::command]
+async fn checkfile(handle: AppHandle, path: String) -> bool {
+    let path = PathBuf::from(path);
+    if path.exists() {
+        println!("Path exists: {:?}", path);
+        true
+    } else {
+        println!("Path does not exist: {:?}", path);
+        false
+    }
+}
+
+
 // Main function
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -999,12 +1120,15 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             get_all_triggers,
             get_file_triggers,
+            get_folder_triggers,
             get_app_triggers,
             get_active_triggers,
             get_trigger_details,
             stop_trigger,
             start_trigger,
             delete_trigger,
+            checkpath,
+            checkfile,
             checkPID,
             listPID,
             infoPID,
@@ -1015,4 +1139,4 @@ pub fn run() {
         .expect("error while running tauri application");
 }
 
-// we going to reach TOUSENDS of lines of code in this file, but don't forget the word of Terry Davis: "Code is like humor. When you have to explain it, it’s bad."
+// we reached TOUSEND lines of rust code in this project, but don't forget the words of Terry Davis: "You can kill a human, but never his ideas."

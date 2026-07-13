@@ -41,6 +41,15 @@ When your selected **Condition** is fires **Actions** are runs.
 | Tauri | Bridge between states, frontend and backend |
 | Rust | Creating ,listening triggers and talking with typescript side |
 
+
+## Tested distros
+
+| Distro | Desc |
+| --- |  ---  |
+| CachyOS | I just got CachyOS so i just tried in CachyOS |
+
+**Note: old versions of ubuntu like before 2023 it might be not work on your distro cause of glibc version. Please test it in latest or new distros.**
+
 ## Used AIs
 
 | LLM | Usage |

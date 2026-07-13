@@ -917,6 +917,9 @@ TriggerList.addEventListener("change", async () => {
     FileTriggerDiv.style.display = "none";
     FolderTriggerDiv.style.display = "Block";
     AppTriggerDiv.style.display = "none";
+    CreateTriggerBtn.style.display = "block";
+    DocsBtn.style.display = "block";
+
   }
 
   else {

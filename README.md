@@ -85,6 +85,7 @@ in ubuntu 24 lts and before versions of 24 lts, it's runnable but except notific
 | Distro | Desc |
 | --- |  ---  |
 | CachyOS | I just got CachyOS so i just tried in CachyOS |
+| Ubuntu 24 lts | Live boot btw, it worked but except notification system. |
 
 **Note: old versions of ubuntu like before 2023 it might be not work on your distro cause of glibc version. Please test it in latest or new distros.**
 

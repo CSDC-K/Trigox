@@ -22,7 +22,45 @@ When your selected **Condition** is fires **Actions** are runs.
 
 ## Create your first trigger with that document!
 
+## Installation for ubuntu
 
+first be sure your webkit is up-to-date
+
+```bash
+sudo apt update && sudo apt install -y \
+  libnotify4 \
+  libnotify-bin \
+  libnotify-dev \
+  notification-daemon \
+  dbus-x11 \
+  d-feet \
+  gir1.2-notify-0.7 \
+  libwebkit2gtk-4.1-dev \
+  libwebkit2gtk-4.0-dev \
+  libappindicator3-1 \
+  libappindicator3-dev \
+  librsvg2-common \
+  libasound2-dev \
+  libglib2.0-dev \
+  libgtk-3-dev \
+  xdg-desktop-portal \
+  xdg-desktop-portal-gtk \
+  zenity
+```
+
+then install trigox using .deb file
+```bash
+sudo apt install ./trigox_*_amd64.deb
+```
+
+now you can run it like:
+```bash
+trigox
+```
+
+### Warning
+
+in ubuntu 24 lts and before versions of 24 lts, it's runnable but except notification system. I recommending to use notify-send if you want to send a notification.
 
 
 | STEP | Usage |

@@ -36,7 +36,6 @@ sudo apt update && sudo apt install -y \
   d-feet \
   gir1.2-notify-0.7 \
   libwebkit2gtk-4.1-dev \
-  libwebkit2gtk-4.0-dev \
   libappindicator3-1 \
   libappindicator3-dev \
   librsvg2-common \

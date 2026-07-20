@@ -1,6 +1,6 @@
 // imports
 
-import { isPermissionGranted, requestPermission, sendNotification } from "@tauri-apps/plugin-notification";
+import { isPermissionGranted, requestPermission } from "@tauri-apps/plugin-notification";
 import { resolveResource } from "@tauri-apps/api/path";
 import { open, message } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
@@ -624,10 +624,11 @@ async function digitalAlart(Title: string, Message: string, Type: string) {
     console.error("Resource couldn't resolve:", e);
   }
 
-  await sendNotification({
+  console.log(iconPath);
+
+  await invoke("notifysend", {
     title: Title,
-    body: Message,
-    icon: iconPath, 
+    msg: Message, 
   });
 }
 

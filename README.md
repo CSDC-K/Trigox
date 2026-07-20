@@ -57,9 +57,9 @@ now you can run it like:
 trigox
 ```
 
-### Warning
+### Warning (Fixed there is no anymore notification bugs.)
 
-in ubuntu 24 lts and before versions of 24 lts, it's runnable but except notification system. I recommending to use notify-send if you want to send a notification.
+FIXED : in ubuntu 24 lts and before versions of 24 lts, it's runnable but except notification system. I recommending to use notify-send if you want to send a notification.
 
 
 | STEP | Usage |

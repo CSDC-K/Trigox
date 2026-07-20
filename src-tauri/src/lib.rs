@@ -315,6 +315,22 @@ async fn watch_trigger(
     }
 }
 
+#[tauri::command]
+async fn notifysend(title : String, msg : String){
+    match tokio::process::Command::new("notify-send").arg(title).arg(msg).output().await {
+        Ok(output) => {
+            println!("notify-send exit: {}", output.status);
+            if !output.stdout.is_empty() {
+                println!("notify-send stdout: {}", String::from_utf8_lossy(&output.stdout));
+            }
+            if !output.stderr.is_empty() {
+                eprintln!("notify-send stderr: {}", String::from_utf8_lossy(&output.stderr));
+            }
+        }
+        Err(e) => eprintln!("notify-send fallback failed to run: {}", e),
+    }
+}
+
 async fn execute_actions(handle: &AppHandle, actions: &[Actions], trigger_name: String) {
     if actions.is_empty() {
         println!("No valid action found for this trigger.");
@@ -331,98 +347,20 @@ async fn execute_action(handle: &AppHandle, action: &Actions, trigger_name: &str
     match action {
         Actions::Notify { Title, Message } => {
             println!("Notify action: title='{}' message='{}'", Title, Message);
-            if let Ok(mut resource_path) = handle.path().resource_dir() {
-                resource_path.push("notification.png");
+                             match tokio::process::Command::new("notify-send").arg(Title).arg(Message).output().await {
+                                Ok(output) => {
+                                    println!("notify-send exit: {}", output.status);
+                                    if !output.stdout.is_empty() {
+                                        println!("notify-send stdout: {}", String::from_utf8_lossy(&output.stdout));
+                                    }
+                                    if !output.stderr.is_empty() {
+                                        eprintln!("notify-send stderr: {}", String::from_utf8_lossy(&output.stderr));
+                                    }
+                                }
+                                Err(e) => eprintln!("notify-send fallback failed to run: {}", e),
+                            }
+                }
 
-                if let Some(icon_path_str) = resource_path.to_str() {
-                    println!("Notify: using icon path='{}'", icon_path_str);
-                    match handle
-                        .notification()
-                        .builder()
-                        .title(Title)
-                        .body(Message)
-                        .icon(icon_path_str)
-                        .show()
-                    {
-                        Ok(_) => {
-                            println!("Notification shown successfully (with icon).");
-                        }
-                        Err(e) => {
-                            eprintln!("Failed to send notification (with icon): {}", e);
-                            // Fallback: try notify-send synchronously and log output
-                            match tokio::process::Command::new("notify-send").arg(Title).arg(Message).output().await {
-                                Ok(output) => {
-                                    println!("notify-send exit: {}", output.status);
-                                    if !output.stdout.is_empty() {
-                                        println!("notify-send stdout: {}", String::from_utf8_lossy(&output.stdout));
-                                    }
-                                    if !output.stderr.is_empty() {
-                                        eprintln!("notify-send stderr: {}", String::from_utf8_lossy(&output.stderr));
-                                    }
-                                }
-                                Err(e) => eprintln!("notify-send fallback failed to run: {}", e),
-                            }
-                        }
-                    }
-                } else {
-                    println!("Notify: resource dir exists but path->str failed: {:?}", resource_path);
-                    match handle
-                        .notification()
-                        .builder()
-                        .title(Title)
-                        .body(Message)
-                        .show()
-                    {
-                        Ok(_) => {
-                            println!("Notification shown successfully (no icon).");
-                        }
-                        Err(e) => {
-                            eprintln!("Failed to send notification (no icon): {}", e);
-                            match tokio::process::Command::new("notify-send").arg(Title).arg(Message).output().await {
-                                Ok(output) => {
-                                    println!("notify-send exit: {}", output.status);
-                                    if !output.stdout.is_empty() {
-                                        println!("notify-send stdout: {}", String::from_utf8_lossy(&output.stdout));
-                                    }
-                                    if !output.stderr.is_empty() {
-                                        eprintln!("notify-send stderr: {}", String::from_utf8_lossy(&output.stderr));
-                                    }
-                                }
-                                Err(e) => eprintln!("notify-send fallback failed to run: {}", e),
-                            }
-                        }
-                    }
-                }
-            } else {
-                println!("Notify: no resource dir; sending notification without icon.");
-                match handle
-                    .notification()
-                    .builder()
-                    .title(Title)
-                    .body(Message)
-                    .show()
-                {
-                    Ok(_) => {
-                        println!("Notification shown successfully (no resource dir).");
-                    }
-                    Err(e) => {
-                        eprintln!("Failed to send notification (no resource dir): {}", e);
-                        match tokio::process::Command::new("notify-send").arg(Title).arg(Message).output().await {
-                            Ok(output) => {
-                                println!("notify-send exit: {}", output.status);
-                                if !output.stdout.is_empty() {
-                                    println!("notify-send stdout: {}", String::from_utf8_lossy(&output.stdout));
-                                }
-                                if !output.stderr.is_empty() {
-                                    eprintln!("notify-send stderr: {}", String::from_utf8_lossy(&output.stderr));
-                                }
-                            }
-                            Err(e) => eprintln!("notify-send fallback failed to run: {}", e),
-                        }
-                    }
-                }
-            }
-        }
         Actions::ShellScript { ScriptPath } => {
             if let Err(e) = Command::new("/bin/sh").arg(ScriptPath).spawn() {
                 eprintln!("Failed to execute shell script: {}", e);
@@ -1133,7 +1071,8 @@ pub fn run() {
             listPID,
             infoPID,
             create_trigger_handled,
-            update_trigger_details
+            update_trigger_details,
+            notifysend
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

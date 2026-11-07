@@ -12,19 +12,27 @@
 
 ## What is Trigox?
 
-Basically **Trigox** is a fully async Computer watcher (yeah a lil goofy describing)
+**Trigox** is a fully async computer watcher (yeah, a little goofy way to describe it).
 
-## How is it works?
+You create **triggers**: each one watches a **condition** (a file, a folder or an app) and runs **actions** (webhooks, shell scripts or notifications) when that condition fires.
 
-When your selected **Condition** is fires **Actions** are runs.
+## How does it work?
 
-**Actions** are selected by user in creating trigger phase.
+When the **condition** you selected fires, the **actions** you chose run.
 
-## Create your first trigger with that document!
+You pick the actions while creating the trigger.
 
-## Installation for ubuntu
+## Create your first trigger
 
-first be sure your webkit is up-to-date
+1. Choose a trigger type (file, folder or app).
+2. Configure the condition and the actions.
+3. Save it — Trigox starts watching right away.
+
+The screenshots under *Installation* show each step.
+
+## Installation (Ubuntu)
+
+First, make sure WebKit and the other dependencies are up to date:
 
 ```bash
 sudo apt update && sudo apt install -y \
@@ -47,50 +55,50 @@ sudo apt update && sudo apt install -y \
   zenity
 ```
 
-then install trigox using .deb file
+Then install Trigox from the `.deb` file:
 ```bash
 sudo apt install ./trigox_*_amd64.deb
 ```
 
-now you can run it like:
+Now you can run it:
 ```bash
 trigox
 ```
 
-### Warning (Fixed there is no anymore notification bugs.)
+### Notification bug (fixed)
 
-FIXED : in ubuntu 24 lts and before versions of 24 lts, it's runnable but except notification system. I recommending to use notify-send if you want to send a notification.
+On Ubuntu 24.04 LTS and older, notifications used to fail. This is fixed now. If you still have problems, use `notify-send` as an action instead.
 
 
 | STEP | Usage |
 | --- |  ---  |
 | 1) Choosing trigger type | <img src="ss1.png" alt="Trigger Selection"/>|
 | 2) Configuring trigger   | <img src="ss2.png" alt="Trigger Selection"/>|
-| 3) If you wanting to see webhook doc and others | <img src="ss3.png" alt="Trigger Selection"/>|
+| 3) Opening the webhook docs and others | <img src="ss3.png" alt="Trigger Selection"/>|
 | 4) Checking doc page | <img src="ss4.png" alt="Trigger Selection"/>|
 | 5) After creating trigger | <img src="ss5.png" alt="Trigger Selection"/>|
 | 6) Making changes after creating trigger | <img src="ss6.png" alt="Trigger Selection"/>|
 
-## Used TECHS
+## Tech stack
 | Tech | Where |
 | --- |  ---  |
 | Vanilla CSS, HTML, TS | Frontend and talking with rust side |
 | Tauri | Bridge between states, frontend and backend |
-| Rust | Creating ,listening triggers and talking with typescript side |
+| Rust | Creating and listening to triggers, talking with the TypeScript side |
 
 
 ## Tested distros
 
 | Distro | Desc |
 | --- |  ---  |
-| CachyOS | I just got CachyOS so i just tried in CachyOS |
-| Ubuntu 24 lts | Live boot btw, it worked but except notification system. |
+| CachyOS | My daily system |
+| Ubuntu 24.04 LTS | Tested on a live boot (the old notification bug is fixed) |
 
-**Note: old versions of ubuntu like before 2023 it might be not work on your distro cause of glibc version. Please test it in latest or new distros.**
+**Note:** Ubuntu versions from before 2023 may not work because of their older glibc. Please use a recent distro.
 
-## Used AIs
+## AI tools used
 
 | LLM | Usage |
 | --- |  ---  |
 | Copilot | pressing tab :D |
-| Gemini | For Researchs |
+| Gemini | Research |
